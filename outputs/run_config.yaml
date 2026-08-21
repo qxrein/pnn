@@ -1,0 +1,59 @@
+physics:
+  wavelength: 1.0
+  n_air: 1.0
+  n_ridge: 1.5
+  n_substrate: 1.45
+  period: 1.0
+  ridge_width: 0.4
+  ridge_height: 0.2
+  domain_height: 2.0
+  ridge_base_fraction: 0.6
+  interface_margin: 0.02
+  nx_visualization: 128
+  nz_visualization: 256
+model:
+  hidden_layers: 5
+  hidden_width: 128
+  activation: tanh
+  fourier_features: false
+  fourier_scale: 1.0
+  num_fourier_features: 32
+sampling:
+  n_interior: 8192
+  n_periodic: 512
+  n_top: 512
+  n_bottom: 512
+  n_interface: 256
+  sampler_type: sobol
+training:
+  epochs: 10000
+  learning_rate: 0.0005
+  weight_decay: 0.0
+  use_lbfgs: true
+  lbfgs_steps: 1000
+  lbfgs_learning_rate: 0.1
+  gradient_clip: 1.0
+  checkpoint_interval: 500
+  early_stopping_patience: 0
+  validation_interval: 100
+  seed: 42
+  dtype: float64
+  device: auto
+  scheduler: cosine
+  scheduler_step_size: 1000
+  scheduler_gamma: 0.5
+loss_weights:
+  pde: 1.0
+  periodic: 100.0
+  top: 500.0
+  bottom: 100.0
+  interface: 0.0
+  data: 0.0
+paths:
+  output_dir: outputs
+  checkpoint_dir: outputs/checkpoints
+  figure_dir: outputs/figures
+  history_file: outputs/training_history.csv
+  results_file: outputs/results.npz
+  metrics_file: outputs/metrics.json
+  config_snapshot: outputs/run_config.yaml

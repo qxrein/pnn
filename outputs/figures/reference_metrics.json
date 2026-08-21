@@ -1,0 +1,7 @@
+{
+  "relative_l2_error_real": 0.9976005025791652,
+  "relative_l2_error_imag": 0.9996418673902504,
+  "relative_l2_error_magnitude": 0.9905607002349247,
+  "maximum_absolute_error": 0.9999096881060622,
+  "num_valid_points": 32768
+}

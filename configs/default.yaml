@@ -1,0 +1,85 @@
+# Default configuration for 2D scalar Helmholtz PINN grating prototype.
+# This is a first research prototype — not a production EM solver.
+#
+# Convention
+# ----------
+# Time dependence: exp(+iωt) suppressed.
+# Propagation sign: E_inc(z) = exp(-i k0 z)  [propagation_sign: -1]
+#   Re{E_inc} = cos(k0 z),  Im{E_inc} = -sin(k0 z)
+# Network inputs: nondimensional  x_tilde = k0*x,  z_tilde = k0*z
+# PDE in nondimensional form: ∂²E/∂x̃² + ∂²E/∂z̃² + εr E = 0
+
+physics:
+  wavelength: 1.0          # free-space wavelength (same units as geometry)
+  n_air: 1.0
+  n_ridge: 1.5
+  n_substrate: 1.45
+  period: 1.0              # grating period in x
+  ridge_width: 0.4
+  ridge_height: 0.2
+  domain_height: 2.0       # total domain height in z
+  ridge_base_fraction: 0.6 # ridge base at z = fraction * domain_height
+  interface_margin: 0.02   # exclude points within this distance of interfaces
+  nx_visualization: 128
+  nz_visualization: 256
+
+model:
+  hidden_layers: 5
+  hidden_width: 128
+  activation: tanh          # tanh | sin (SIREN)
+  fourier_features: false   # powers-of-two Fourier features on nondim coords
+  fourier_scale: 1.0
+  num_fourier_features: 32  # total = 4 * (num_fourier_features // 4) features
+
+sampling:
+  n_interior: 8192
+  n_periodic: 512
+  n_top: 512
+  n_bottom: 512
+  n_interface: 256
+  sampler_type: sobol       # uniform | sobol
+
+training:
+  epochs: 10000
+  learning_rate: 5.0e-4
+  weight_decay: 0.0
+  use_lbfgs: true
+  lbfgs_steps: 1000
+  lbfgs_learning_rate: 0.1
+  gradient_clip: 1.0
+  checkpoint_interval: 500
+  early_stopping_patience: 0   # 0 = disabled
+  validation_interval: 100
+  seed: 42
+  dtype: float64
+  device: auto                 # auto | cpu | cuda | mps
+  scheduler: cosine            # none | cosine | step
+  scheduler_step_size: 1000
+  scheduler_gamma: 0.5
+
+loss_weights:
+  pde: 1.0
+  periodic: 100.0
+  top: 500.0        # dominant: carries incident-wave information
+  bottom: 100.0     # Robin absorbing condition
+  interface: 0.0
+  data: 0.0
+
+paths:
+  output_dir: outputs
+  checkpoint_dir: outputs/checkpoints
+  figure_dir: outputs/figures
+  history_file: outputs/training_history.csv
+  results_file: outputs/results.npz
+  metrics_file: outputs/metrics.json
+  config_snapshot: outputs/run_config.yaml
+
+# Smoke-test overrides (used by tests/smoke config if copied)
+smoke:
+  epochs: 50
+  n_interior: 256
+  n_periodic: 64
+  n_top: 32
+  n_bottom: 32
+  hidden_layers: 2
+  hidden_width: 32

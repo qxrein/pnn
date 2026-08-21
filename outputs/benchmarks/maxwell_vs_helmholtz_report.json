@@ -1,0 +1,83 @@
+{
+  "helmholtz": {
+    "errors": {
+      "relative_l2_real": 0.40606313363828594,
+      "relative_l2_imag": 1.0083973860352224,
+      "relative_l2_magnitude": 0.5064694160970361,
+      "relative_complex_l2": 0.6996056018431984,
+      "relative_l2_phase_aligned": 0.69909729553824,
+      "phase_rmse_deg": 64.73674404512879,
+      "global_phase_offset_deg": 2.2028638034149024
+    },
+    "region": {
+      "air": {
+        "relative_l2_real": 0.19814734036505063,
+        "relative_l2_imag": 1.0390694923448238,
+        "relative_l2_magnitude": 0.3630711307097556,
+        "relative_complex_l2": 0.6012895798902302,
+        "relative_l2_phase_aligned": 0.6011168473413289,
+        "phase_rmse_deg": 55.26256954409867,
+        "global_phase_offset_deg": 1.0516982463243787
+      },
+      "slab": {
+        "relative_l2_real": 0.4856619817840348,
+        "relative_l2_imag": 1.0403539994616344,
+        "relative_l2_magnitude": 0.6933344333326305,
+        "relative_complex_l2": 0.8451808359220474,
+        "relative_l2_phase_aligned": 0.8349126596610513,
+        "phase_rmse_deg": 77.65478383817556,
+        "global_phase_offset_deg": -16.119214523076284
+      },
+      "sub": {
+        "relative_l2_real": 0.8593280510840433,
+        "relative_l2_imag": 0.940002966204753,
+        "relative_l2_magnitude": 0.7581329745622383,
+        "relative_complex_l2": 0.9041633851498453,
+        "relative_l2_phase_aligned": 0.8878520164206752,
+        "phase_rmse_deg": 76.70152068318643,
+        "global_phase_offset_deg": 24.89627186598498
+      }
+    }
+  },
+  "maxwell": {
+    "errors": {
+      "relative_l2_real": 0.00015748976507929253,
+      "relative_l2_imag": 0.00019049598036346372,
+      "relative_l2_magnitude": 0.00011444525501966067,
+      "relative_complex_l2": 0.00017081714384839248,
+      "relative_l2_phase_aligned": 0.00016419374508286596,
+      "phase_rmse_deg": 0.006901954214402367,
+      "global_phase_offset_deg": 0.0026990313905318744,
+      "H_complex_l2": 0.00020407485335038783
+    },
+    "region": {
+      "air": {
+        "relative_l2_real": 0.0001450052560371754,
+        "relative_l2_imag": 0.00019554887182876563,
+        "relative_l2_magnitude": 0.0001193311688695669,
+        "relative_complex_l2": 0.00016235320649461954,
+        "relative_l2_phase_aligned": 0.00016212016499545081,
+        "phase_rmse_deg": 0.006952600053933994,
+        "global_phase_offset_deg": 0.0004982458388155227
+      },
+      "slab": {
+        "relative_l2_real": 0.00016923547674884052,
+        "relative_l2_imag": 9.2927585018995e-05,
+        "relative_l2_magnitude": 7.024026479758014e-05,
+        "relative_complex_l2": 0.00013165424199740615,
+        "relative_l2_phase_aligned": 7.196260760916814e-05,
+        "phase_rmse_deg": 0.0008934024800315184,
+        "global_phase_offset_deg": 0.006316859212388669
+      },
+      "sub": {
+        "relative_l2_real": 0.00020378149571979336,
+        "relative_l2_imag": 0.00020484993592378447,
+        "relative_l2_magnitude": 0.00011013110973603537,
+        "relative_complex_l2": 0.00020436415008496698,
+        "relative_l2_phase_aligned": 0.00014194276150749494,
+        "phase_rmse_deg": 0.005130890353445405,
+        "global_phase_offset_deg": 0.008424362118124458
+      }
+    }
+  }
+}

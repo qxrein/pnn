@@ -1,0 +1,12 @@
+{
+  "checkpoint": "/Users/rein/projects/rero/pinn_optics/outputs/checkpoints/best_model.pt",
+  "checkpoint_epoch": 9900,
+  "top_bc_mse": 4.68068827785828e-06,
+  "top_bc_mse_real": 4.042025466333143e-06,
+  "top_bc_mse_imag": 6.386628115251369e-07,
+  "bottom_robin_mse": 150.73260498046875,
+  "periodic_mse": 7.269647539942525e-06,
+  "k0": 6.283185307179586,
+  "k_substrate": 9.1106186954104,
+  "convention": "E_inc = exp(-i k0 z), time: exp(+i\u03c9t) suppressed"
+}
