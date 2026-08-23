@@ -1,0 +1,12 @@
+{
+  "case": "layered",
+  "errors": {
+    "relative_l2_real": 0.5093720695056181,
+    "relative_l2_imag": 0.8558651461057628,
+    "relative_l2_magnitude": 0.330818503946966,
+    "relative_complex_l2": 0.662902319513659,
+    "relative_l2_phase_aligned": 0.64914544290229,
+    "phase_rmse_deg": 60.05518700497639,
+    "global_phase_offset_deg": 9.143989732932585
+  }
+}

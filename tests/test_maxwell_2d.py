@@ -24,7 +24,7 @@ import torch
 from src.config import PhysicsConfig
 from src.maxwell_2d import (
     Maxwell2DMLP,
-    incident_field_2d,
+    incident_E_H,
     maxwell_2d_bottom_bc_loss,
     maxwell_2d_pde_residual,
     maxwell_2d_periodic_bc_loss,

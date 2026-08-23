@@ -2,28 +2,20 @@
 
 Physical system
 ---------------
-TE polarisation: E_y field, with H_x and H_z components.
+TE polarisation: E_y field, H̃_x and H̃_z components (normalised magnetic fields).
 Non-magnetic medium: μr = 1 everywhere.
-Convention: exp(+iωt) suppressed.  Propagation convention: E_inc = exp(-ik0 z).
+Convention: exp(+iωt) suppressed.  E_inc(z) = exp(-ik0 z).
 
-Normalised magnetic field
---------------------------
-We define the normalised magnetic field:
+Normalised magnetic field convention
+--------------------------------------
+H̃_x is defined so that the validated 1-D Maxwell equations hold:
+    dEr/dz =  k0 * Hi_x
+    dEi/dz = -k0 * Hr_x
 
-    H̃_x = +Z₀ * (-H_x)   (note: negative of H_x_physical)
-    H̃_z = +Z₀ * (-H_z)
+This is consistent with H̃_x = +n * E_y for a forward wave (verified).
 
-This sign choice makes the equations consistent with the validated 1-D system
-(src/maxwell_1d.py).  Verification against the forward plane wave E_y = exp(-ik0 z):
-
-    H̃_x = +n * E_y   (for forward wave in medium with index n)
-    H̃_z = 0          (for z-propagating wave)
-
-2-D TE Maxwell equations (in this convention)
-----------------------------------------------
-Splitting into real and imaginary parts with E_y = Er + iEi,
-H̃_x = Hr_x + iHi_x,  H̃_z = Hr_z + iHi_z:
-
+2-D TE Maxwell equations (real/imag split)
+-------------------------------------------
     (Ar)  ∂Er/∂z =  k0 * Hi_x
     (Ai)  ∂Ei/∂z = -k0 * Hr_x
     (Br)  ∂Er/∂x = -k0 * Hi_z
@@ -31,35 +23,44 @@ H̃_x = Hr_x + iHi_x,  H̃_z = Hr_z + iHi_z:
     (Cr)  ∂Hr_x/∂z - ∂Hr_z/∂x =  k0 * εr * Ei
     (Ci)  ∂Hi_x/∂z - ∂Hi_z/∂x = -k0 * εr * Er
 
-Network
--------
-One MLP for the full 2-D domain, predicting 6 real outputs:
-    [Er, Ei, Hr_x, Hi_x, Hr_z, Hi_z]
+Two formulations
+-----------------
+TOTAL-FIELD (TF):
+    Network predicts the complete field [E_y, H̃_x, H̃_z].
+    Top BC: E(z=0) = E_inc(0) = 1 + 0i.
+    Problem: this suppresses reflected diffraction orders at the top, which
+    is physically wrong for a grating that reflects light.
 
-Inputs are normalised (x, z) coordinates mapped to [-1, 1].
-Fourier features encode the known oscillation frequencies.
+SCATTERED-FIELD (SF):
+    E_total = E_inc + E_scat,  H̃_total = H̃_inc + H̃_scat.
+    Network predicts only [E_scat, H̃_scat].
+    The incident field satisfies Maxwell exactly (with εr=1 everywhere),
+    so the scattered-field PDE has a source term from the permittivity contrast:
+        ∂E_scat_r/∂z =  k0 * Hi_scat_x
+        ∂E_scat_i/∂z = -k0 * Hr_scat_x
+        ...
+        ∂Hr_scat_x/∂z - ∂Hr_scat_z/∂x =  k0*εr*Ei_scat + k0*(εr-1)*Ei_inc
+        ∂Hi_scat_x/∂z - ∂Hi_scat_z/∂x = -k0*εr*Er_scat - k0*(εr-1)*Er_inc
 
-Boundary and interface conditions
-----------------------------------
-Top (z=0): incident plane wave E_y = exp(-ik0 z).
-    Er(x, 0) = cos(0) = 1,   Ei(x, 0) = -sin(0) = 0  (total field = E_inc)
-    Hr_x(x, 0) = n_air * Er(x, 0) = n_air
-    Hi_x(x, 0) = n_air * Ei(x, 0) = 0
+    Scattered-field BCs (which correctly allow reflection and transmission):
+        Top (z=0):    E_scat = 0 + outgoing Robin condition  (scattered wave
+                      enters from top and propagates upward — radiation BC)
+        Bottom:       H̃_scat_x = n_sub * E_scat  (outgoing into substrate)
+        Periodic:     E_scat and H̃_scat periodic with grating period
 
-    Note: for a total-field formulation, E_total = E_inc + E_scat.
-    At z=0, E_total = E_inc (assume negligible back-reflection from bottom;
-    this is a soft constraint).
+    The SF formulation is the standard approach for grating problems.
+    It naturally admits all reflected and transmitted orders.
 
-Bottom (z=domain_height): outgoing wave in substrate.
-    Robin condition: H̃_x = n_sub * E_y  (forward wave only)
-    Hr_x = n_sub * Er,  Hi_x = n_sub * Ei
-
-Left/right (x=0, x=period): periodic boundary.
-    E, H̃ are periodic with period = grating period.
-
-PDE loss weighting
-------------------
-All six equations are weighted equally in the PDE loss.
+Sampling strategy
+-----------------
+Region-wise sampling (in addition to uniform) for the grating problem:
+    - Air region (above grating)
+    - Ridge region (inside grating ridge)
+    - Substrate (below grating)
+    - Near-interface band (within 2× interface_margin)
+    - Top boundary
+    - Bottom boundary
+    - Periodic side boundaries
 """
 
 from __future__ import annotations
@@ -81,17 +82,20 @@ if TYPE_CHECKING:
 
 
 class Maxwell2DMLP(nn.Module):
-    """2-D Maxwell field network: (x, z) → [Er, Ei, Hr_x, Hi_x, Hr_z, Hi_z].
+    """2-D Maxwell field network: (x, z) → 6 real outputs.
 
-    Inputs normalised to [-1, 1].
-    Fourier features at multiple frequency levels.
+    Total-field mode:     [Er, Ei, Hr_x, Hi_x, Hr_z, Hi_z]
+    Scattered-field mode: [Er_scat, Ei_scat, Hr_x_scat, Hi_x_scat, Hr_z_scat, Hi_z_scat]
+
+    The mode is determined by how the losses are computed; the network
+    architecture is identical.
     """
 
     def __init__(
         self,
         physics: "PhysicsConfig",
-        hidden_layers: int = 5,
-        hidden_width: int = 128,
+        hidden_layers: int = 4,
+        hidden_width: int = 64,
         num_fourier_levels: int = 4,
     ) -> None:
         super().__init__()
@@ -100,11 +104,11 @@ class Maxwell2DMLP(nn.Module):
         self._k0 = physics.k0
         self.num_fourier_levels = num_fourier_levels
 
-        in_dim = 4 * num_fourier_levels  # sin+cos for each of x_n, z_n
+        in_dim = 4 * num_fourier_levels  # sin+cos for (x_n, z_n)
         layers: list[nn.Module] = [nn.Linear(in_dim, hidden_width), nn.Tanh()]
         for _ in range(hidden_layers - 1):
             layers += [nn.Linear(hidden_width, hidden_width), nn.Tanh()]
-        layers.append(nn.Linear(hidden_width, 6))  # [Er, Ei, Hr_x, Hi_x, Hr_z, Hi_z]
+        layers.append(nn.Linear(hidden_width, 6))
         self.net = nn.Sequential(*layers)
         self._init()
 
@@ -114,41 +118,54 @@ class Maxwell2DMLP(nn.Module):
                 nn.init.xavier_normal_(m.weight)
                 nn.init.zeros_(m.bias)
 
-    def _phys_to_norm(
-        self, x: torch.Tensor, z: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        xn = 2.0 * x / self._period - 1.0
-        zn = 2.0 * z / self._domain_height - 1.0
-        return xn, zn
+    def _phys_to_norm(self, x, z):
+        return 2.0 * x / self._period - 1.0, 2.0 * z / self._domain_height - 1.0
 
-    def _fourier(self, xn: torch.Tensor, zn: torch.Tensor) -> torch.Tensor:
+    def _fourier(self, xn, zn):
         parts = []
         for l in range(self.num_fourier_levels):
             freq = (2.0 ** l) * math.pi
-            parts += [
-                torch.sin(freq * xn),
-                torch.cos(freq * xn),
-                torch.sin(freq * zn),
-                torch.cos(freq * zn),
-            ]
+            parts += [torch.sin(freq * xn), torch.cos(freq * xn),
+                      torch.sin(freq * zn), torch.cos(freq * zn)]
         return torch.stack(parts, dim=-1)
 
     def forward(self, x: torch.Tensor, z: torch.Tensor) -> torch.Tensor:
-        """Shape (N, 6): [Er, Ei, Hr_x, Hi_x, Hr_z, Hi_z]."""
+        """Shape (N, 6)."""
         xn, zn = self._phys_to_norm(x, z)
         return self.net(self._fourier(xn, zn))
 
-    def field_components(
-        self, x: torch.Tensor, z: torch.Tensor
-    ) -> tuple[torch.Tensor, ...]:
-        """Return (Er, Ei, Hr_x, Hi_x, Hr_z, Hi_z)."""
+    def field_components(self, x, z):
         out = self.forward(x, z)
         return out[:, 0], out[:, 1], out[:, 2], out[:, 3], out[:, 4], out[:, 5]
 
 
 # ---------------------------------------------------------------------------
-# PDE residual
+# Incident field (needed for scattered-field formulation)
 # ---------------------------------------------------------------------------
+
+
+def incident_E_H(z: torch.Tensor, physics: "PhysicsConfig") -> tuple[torch.Tensor, ...]:
+    """Incident plane wave E_inc = exp(-ik0 z) and H̃_inc = n_air * E_inc.
+
+    Returns (Er_inc, Ei_inc, Hr_x_inc, Hi_x_inc) — all shape (N,).
+    Hr_z_inc = Hi_z_inc = 0 for a z-propagating wave.
+    """
+    k0, n = physics.k0, physics.n_air
+    Er = torch.cos(k0 * z)
+    Ei = -torch.sin(k0 * z)
+    return Er, Ei, n * Er, n * Ei
+
+
+# ---------------------------------------------------------------------------
+# PDE residuals
+# ---------------------------------------------------------------------------
+
+
+def _grad(field, wrt, ones):
+    g = torch.autograd.grad(field, wrt, grad_outputs=ones,
+                             create_graph=True, retain_graph=True,
+                             allow_unused=True)[0]
+    return g if g is not None else torch.zeros_like(wrt)
 
 
 def maxwell_2d_pde_residual(
@@ -157,128 +174,138 @@ def maxwell_2d_pde_residual(
     z: torch.Tensor,
     physics: "PhysicsConfig",
 ) -> tuple[torch.Tensor, ...]:
-    """Compute all six 2-D TE Maxwell residuals efficiently.
+    """Total-field 2-D TE Maxwell residuals (6 equations).
 
-    Uses a single backward pass to compute all eight first-order partial
-    derivatives simultaneously, reducing autograd overhead by ~8×.
-
-    Equations:
-        (Ar)  ∂Er/∂z -  k0 * Hi_x = 0
-        (Ai)  ∂Ei/∂z +  k0 * Hr_x = 0
-        (Br)  ∂Er/∂x +  k0 * Hi_z = 0
-        (Bi)  ∂Ei/∂x -  k0 * Hr_z = 0
-        (Cr)  ∂Hr_x/∂z - ∂Hr_z/∂x - k0*εr * Ei = 0
-        (Ci)  ∂Hi_x/∂z - ∂Hi_z/∂x + k0*εr * Er = 0
+    Returns res_Ar, res_Ai, res_Br, res_Bi, res_Cr, res_Ci each shape (N,).
     """
     from src.geometry import epsilon_r
 
     x_g = x.detach().clone().requires_grad_(True)
     z_g = z.detach().clone().requires_grad_(True)
-
     Er, Ei, Hr_x, Hi_x, Hr_z, Hi_z = model.field_components(x_g, z_g)
     k0  = physics.k0
     eps = epsilon_r(x_g.detach(), z_g.detach(), physics)
-
     ones = torch.ones_like(Er)
 
-    # Compute all z-derivatives in one grad call
-    dz_vals = torch.autograd.grad(
-        [Er, Ei, Hr_x, Hi_x],
-        z_g,
-        grad_outputs=[ones, ones, ones, ones],
-        create_graph=True,
-        retain_graph=True,
-        allow_unused=True,
-    )
-    dEr_dz  = dz_vals[0] if dz_vals[0] is not None else torch.zeros_like(Er)
-    dEi_dz  = dz_vals[1] if dz_vals[1] is not None else torch.zeros_like(Ei)
-    dHrx_dz = dz_vals[2] if dz_vals[2] is not None else torch.zeros_like(Hr_x)
-    dHix_dz = dz_vals[3] if dz_vals[3] is not None else torch.zeros_like(Hi_x)
+    dEr_dz  = _grad(Er,   z_g, ones);  dEi_dz  = _grad(Ei,   z_g, ones)
+    dHrx_dz = _grad(Hr_x, z_g, ones);  dHix_dz = _grad(Hi_x, z_g, ones)
+    dEr_dx  = _grad(Er,   x_g, ones);  dEi_dx  = _grad(Ei,   x_g, ones)
+    dHrz_dx = _grad(Hr_z, x_g, ones);  dHiz_dx = _grad(Hi_z, x_g, ones)
 
-    # Compute all x-derivatives in one grad call
-    dx_vals = torch.autograd.grad(
-        [Er, Ei, Hr_z, Hi_z],
-        x_g,
-        grad_outputs=[ones, ones, ones, ones],
-        create_graph=True,
-        retain_graph=True,
-        allow_unused=True,
-    )
-    dEr_dx  = dx_vals[0] if dx_vals[0] is not None else torch.zeros_like(Er)
-    dEi_dx  = dx_vals[1] if dx_vals[1] is not None else torch.zeros_like(Ei)
-    dHrz_dx = dx_vals[2] if dx_vals[2] is not None else torch.zeros_like(Hr_z)
-    dHiz_dx = dx_vals[3] if dx_vals[3] is not None else torch.zeros_like(Hi_z)
-
-    res_Ar = dEr_dz  -  k0 * Hi_x
-    res_Ai = dEi_dz  +  k0 * Hr_x
-    res_Br = dEr_dx  +  k0 * Hi_z
-    res_Bi = dEi_dx  -  k0 * Hr_z
-    res_Cr = dHrx_dz - dHrz_dx - k0 * eps * Ei
-    res_Ci = dHix_dz - dHiz_dx + k0 * eps * Er
-
-    return res_Ar, res_Ai, res_Br, res_Bi, res_Cr, res_Ci
+    return (dEr_dz  -  k0 * Hi_x,
+            dEi_dz  +  k0 * Hr_x,
+            dEr_dx  +  k0 * Hi_z,
+            dEi_dx  -  k0 * Hr_z,
+            dHrx_dz - dHrz_dx - k0 * eps * Ei,
+            dHix_dz - dHiz_dx + k0 * eps * Er)
 
 
-def maxwell_2d_pde_loss(
+def maxwell_2d_scattered_pde_residual(
     model: Maxwell2DMLP,
     x: torch.Tensor,
     z: torch.Tensor,
     physics: "PhysicsConfig",
-) -> torch.Tensor:
-    """Mean squared 2-D Maxwell PDE residual."""
-    residuals = maxwell_2d_pde_residual(model, x, z, physics)
+) -> tuple[torch.Tensor, ...]:
+    """Scattered-field 2-D TE Maxwell residuals.
+
+    The network predicts [E_scat, H̃_scat].
+    The incident field satisfies Maxwell with εr=1; the contrast
+    (εr - 1) drives the scattered field:
+
+        ∂Er_s/∂z  -  k0 * Hi_s_x = 0
+        ∂Ei_s/∂z  +  k0 * Hr_s_x = 0
+        ∂Er_s/∂x  +  k0 * Hi_s_z = 0
+        ∂Ei_s/∂x  -  k0 * Hr_s_z = 0
+        ∂Hr_s_x/∂z - ∂Hr_s_z/∂x - k0*εr*Ei_s = k0*(εr-1)*Ei_inc
+        ∂Hi_s_x/∂z - ∂Hi_s_z/∂x + k0*εr*Er_s = -k0*(εr-1)*Er_inc
+
+    Moving the source to the left:
+        res_Cr = ∂Hr_s_x/∂z - ∂Hr_s_z/∂x - k0*εr*Ei_s - k0*(εr-1)*Ei_inc
+        res_Ci = ∂Hi_s_x/∂z - ∂Hi_s_z/∂x + k0*εr*Er_s + k0*(εr-1)*Er_inc
+    """
+    from src.geometry import epsilon_r
+
+    x_g = x.detach().clone().requires_grad_(True)
+    z_g = z.detach().clone().requires_grad_(True)
+    Er_s, Ei_s, Hr_sx, Hi_sx, Hr_sz, Hi_sz = model.field_components(x_g, z_g)
+    k0  = physics.k0
+    eps = epsilon_r(x_g.detach(), z_g.detach(), physics)
+    ones = torch.ones_like(Er_s)
+
+    # Incident field at these points (no graph needed)
+    Er_inc, Ei_inc, _, _ = incident_E_H(z_g.detach(), physics)
+
+    dEr_dz  = _grad(Er_s, z_g, ones);  dEi_dz  = _grad(Ei_s, z_g, ones)
+    dHrx_dz = _grad(Hr_sx, z_g, ones); dHix_dz = _grad(Hi_sx, z_g, ones)
+    dEr_dx  = _grad(Er_s, x_g, ones);  dEi_dx  = _grad(Ei_s, x_g, ones)
+    dHrz_dx = _grad(Hr_sz, x_g, ones); dHiz_dx = _grad(Hi_sz, x_g, ones)
+
+    delta_eps = eps - 1.0   # = 0 in air, nonzero inside dielectric
+
+    return (dEr_dz  -  k0 * Hi_sx,
+            dEi_dz  +  k0 * Hr_sx,
+            dEr_dx  +  k0 * Hi_sz,
+            dEi_dx  -  k0 * Hr_sz,
+            dHrx_dz - dHrz_dx - k0 * eps * Ei_s - k0 * delta_eps * Ei_inc,
+            dHix_dz - dHiz_dx + k0 * eps * Er_s + k0 * delta_eps * Er_inc)
+
+
+def maxwell_2d_pde_loss(model, x, z, physics, scattered=False):
+    """Mean squared PDE residual (average over 6 equations)."""
+    fn = maxwell_2d_scattered_pde_residual if scattered else maxwell_2d_pde_residual
+    residuals = fn(model, x, z, physics)
     return sum(torch.mean(r**2) for r in residuals) / len(residuals)
 
 
 # ---------------------------------------------------------------------------
-# Boundary and interface losses
+# Boundary conditions
 # ---------------------------------------------------------------------------
 
 
-def maxwell_2d_top_bc_loss(
-    model: Maxwell2DMLP,
-    x: torch.Tensor,
-    z: torch.Tensor,
-    physics: "PhysicsConfig",
-) -> torch.Tensor:
-    """Soft Dirichlet at z=0: total field = incident plane wave.
+def maxwell_2d_top_bc_loss(model, x, z, physics, scattered=False):
+    """Top BC at z=0.
 
-    E_y(x, 0) = exp(-ik0 * 0) = 1  =>  Er=1, Ei=0
-    H̃_x(x, 0) = n_air * E_y(x, 0)  =>  Hr_x=n_air, Hi_x=0
+    Total-field:   E(x,0) = E_inc(0) = (1, 0),  H̃_x = (n_air, 0).
+                   WRONG for grating: suppresses reflected orders.
+
+    Scattered-field (correct for grating):
+                   E_scat(x,0): Robin radiation BC — outgoing scattered wave
+                   propagates upward.  For a plane wave decomposition, this is
+                   H̃_scat_x = -n_air * E_scat  (upward-propagating convention).
+                   The minus sign: upward (reflected) wave has H̃ = -n*E.
     """
     Er, Ei, Hr_x, Hi_x, _, _ = model.field_components(x, z)
-    n_air = physics.n_air
-    loss_E = torch.mean((Er - 1.0)**2 + Ei**2)
-    loss_H = torch.mean((Hr_x - n_air)**2 + Hi_x**2)
-    return loss_E + loss_H
+    if scattered:
+        # Robin outgoing (upward): H̃_scat_x = -n_air * E_scat
+        n = physics.n_air
+        return torch.mean((Hr_x + n * Er)**2 + (Hi_x + n * Ei)**2)
+    else:
+        # Soft Dirichlet: E_total = E_inc at z=0 (suppresses reflection — incorrect for gratings)
+        n = physics.n_air
+        loss_E = torch.mean((Er - 1.0)**2 + Ei**2)
+        loss_H = torch.mean((Hr_x - n)**2 + Hi_x**2)
+        return loss_E + loss_H
 
 
-def maxwell_2d_bottom_bc_loss(
-    model: Maxwell2DMLP,
-    x: torch.Tensor,
-    z: torch.Tensor,
-    physics: "PhysicsConfig",
-) -> torch.Tensor:
-    """Robin outgoing condition at z=domain_height: H̃_x = n_sub * E_y."""
+def maxwell_2d_bottom_bc_loss(model, x, z, physics, scattered=False):
+    """Bottom BC at z=domain_height: outgoing (downward) wave.
+
+    Downward-propagating: H̃_x = +n_sub * E_y.
+    """
     Er, Ei, Hr_x, Hi_x, _, _ = model.field_components(x, z)
     n_sub = physics.n_substrate
     return torch.mean((Hr_x - n_sub * Er)**2 + (Hi_x - n_sub * Ei)**2)
 
 
-def maxwell_2d_periodic_bc_loss(
-    model: Maxwell2DMLP,
-    x_left: torch.Tensor,
-    z_per: torch.Tensor,
-    x_right: torch.Tensor,
-) -> torch.Tensor:
-    """Periodic BC: all fields match at x=0 and x=period."""
+def maxwell_2d_periodic_bc_loss(model, x_left, z_per, x_right):
+    """Periodic BC: field at x=0 equals field at x=period."""
     out_left  = model.forward(x_left,  z_per)
     out_right = model.forward(x_right, z_per)
     return torch.mean((out_left - out_right)**2)
 
 
 # ---------------------------------------------------------------------------
-# Sampling
+# Region-wise sampling
 # ---------------------------------------------------------------------------
 
 
@@ -292,62 +319,114 @@ def sample_collocation_points(
     dtype: torch.dtype,
     seed: int = 0,
     margin: float = 0.01,
+    n_interface: int = 0,
 ) -> dict[str, torch.Tensor]:
-    """Sample all collocation point sets.
+    """Sample collocation points with optional interface-region oversampling.
 
-    Returns a dict with keys:
-        x_int, z_int          interior (away from interfaces)
-        x_top, z_top          top boundary (z=0)
-        x_bot, z_bot          bottom boundary (z=domain_height)
-        x_left, z_per         left periodic boundary (x=0)
-        x_right               right periodic boundary (x=period)
+    Interior sampling uses region-wise allocation so the small grating ridge
+    (≈4% of domain area) gets proportional coverage:
+        50% uniform across full domain (interface-margin excluded)
+        25% from ridge region
+        25% from near-interface band
+
+    Parameters
+    ----------
+    n_interface :
+        Extra points near the grating ridge boundary.  0 = disabled.
     """
     from src.geometry import interface_mask
 
     rng = np.random.default_rng(seed)
+    physics_margin = margin
 
-    # --- Interior (exclude interface margins) ---
-    x_int_list, z_int_list = [], []
+    def _t(a):
+        return torch.as_tensor(a, dtype=dtype, device=device)
+
+    # ---- Interior ----
+    n_uniform   = n_interior // 2
+    n_ridge     = n_interior // 4
+    n_near_intf = n_interior - n_uniform - n_ridge
+
+    # Uniform (excluding margins)
+    xu_list, zu_list = [], []
     attempts = 0
-    while sum(len(a) for a in x_int_list) < n_interior and attempts < 30:
-        xc = rng.uniform(0.0, physics.period, n_interior)
-        zc = rng.uniform(0.0, physics.domain_height, n_interior)
+    while sum(len(a) for a in xu_list) < n_uniform and attempts < 30:
+        xc = rng.uniform(0.0, physics.period, n_uniform)
+        zc = rng.uniform(0.0, physics.domain_height, n_uniform)
         xt = torch.as_tensor(xc, dtype=dtype)
         zt = torch.as_tensor(zc, dtype=dtype)
-        keep = ~interface_mask(xt, zt, physics, margin).numpy()
-        x_int_list.append(xc[keep])
-        z_int_list.append(zc[keep])
+        keep = ~interface_mask(xt, zt, physics, physics_margin).numpy()
+        xu_list.append(xc[keep]); zu_list.append(zc[keep])
         attempts += 1
-    x_int = np.concatenate(x_int_list)[:n_interior]
-    z_int = np.concatenate(z_int_list)[:n_interior]
+    x_uni = np.concatenate(xu_list)[:n_uniform]
+    z_uni = np.concatenate(zu_list)[:n_uniform]
 
-    # --- Top boundary (z=0) ---
+    # Ridge region — only sample if ridge has non-zero area
+    ridge_area = (physics.ridge_x_max - physics.ridge_x_min) * (physics.ridge_z_max - physics.ridge_z_min)
+    if ridge_area > (2 * physics_margin) ** 2:
+        x_ridge = rng.uniform(physics.ridge_x_min + physics_margin,
+                              physics.ridge_x_max - physics_margin, n_ridge)
+        z_ridge = rng.uniform(physics.ridge_z_min + physics_margin,
+                              physics.ridge_z_max - physics_margin, n_ridge)
+    else:
+        # No ridge (homogeneous/layered case): use uniform sampling for this quota
+        x_ridge = rng.uniform(0.0, physics.period, n_ridge)
+        z_ridge = rng.uniform(0.0, physics.domain_height, n_ridge)
+
+    # Near-interface band
+    xi_list, zi_list = [], []
+    if n_near_intf > 0:
+        attempts = 0
+        while sum(len(a) for a in xi_list) < n_near_intf and attempts < 30:
+            xc = rng.uniform(0.0, physics.period, n_near_intf * 4)
+            zc = rng.uniform(0.0, physics.domain_height, n_near_intf * 4)
+            xt = torch.as_tensor(xc, dtype=dtype)
+            zt = torch.as_tensor(zc, dtype=dtype)
+            near = interface_mask(xt, zt, physics, physics_margin * 5).numpy()
+            not_too_close = ~interface_mask(xt, zt, physics, physics_margin).numpy()
+            keep = near & not_too_close
+            xi_list.append(xc[keep]); zi_list.append(zc[keep])
+            attempts += 1
+        x_ni = np.concatenate(xi_list)[:n_near_intf]
+        z_ni = np.concatenate(zi_list)[:n_near_intf]
+    else:
+        x_ni, z_ni = np.empty(0), np.empty(0)
+
+    x_int = np.concatenate([x_uni, x_ridge, x_ni])[:n_interior]
+    z_int = np.concatenate([z_uni, z_ridge, z_ni])[:n_interior]
+
+    # ---- Boundaries ----
     x_top = rng.uniform(0.0, physics.period, n_top)
     z_top = np.zeros(n_top)
-
-    # --- Bottom boundary (z=domain_height) ---
     x_bot = rng.uniform(0.0, physics.period, n_bottom)
     z_bot = np.full(n_bottom, physics.domain_height)
-
-    # --- Periodic boundaries ---
     z_per  = rng.uniform(0.0, physics.domain_height, n_periodic)
     x_left  = np.zeros(n_periodic)
     x_right = np.full(n_periodic, physics.period)
 
-    def _t(a: np.ndarray) -> torch.Tensor:
-        return torch.as_tensor(a, dtype=dtype, device=device)
-
-    return {
-        "x_int":   _t(x_int),
-        "z_int":   _t(z_int),
-        "x_top":   _t(x_top),
-        "z_top":   _t(z_top),
-        "x_bot":   _t(x_bot),
-        "z_bot":   _t(z_bot),
-        "x_left":  _t(x_left),
-        "x_right": _t(x_right),
-        "z_per":   _t(z_per),
+    result = {
+        "x_int": _t(x_int), "z_int": _t(z_int),
+        "x_top": _t(x_top), "z_top": _t(z_top),
+        "x_bot": _t(x_bot), "z_bot": _t(z_bot),
+        "x_left": _t(x_left), "x_right": _t(x_right), "z_per": _t(z_per),
     }
+
+    # ---- Optional extra interface points ----
+    if n_interface > 0:
+        xi2, zi2 = [], []
+        attempts = 0
+        while sum(len(a) for a in xi2) < n_interface and attempts < 30:
+            xc = rng.uniform(0.0, physics.period, n_interface * 4)
+            zc = rng.uniform(0.0, physics.domain_height, n_interface * 4)
+            xt = torch.as_tensor(xc, dtype=dtype)
+            zt = torch.as_tensor(zc, dtype=dtype)
+            near = interface_mask(xt, zt, physics, physics_margin * 2).numpy()
+            xi2.append(xc[near]); zi2.append(zc[near])
+            attempts += 1
+        result["x_intf"] = _t(np.concatenate(xi2)[:n_interface])
+        result["z_intf"] = _t(np.concatenate(zi2)[:n_interface])
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -363,32 +442,73 @@ def maxwell_2d_total_loss(
     w_top: float = 100.0,
     w_bot: float = 50.0,
     w_per: float = 100.0,
+    scattered: bool = False,
 ) -> dict[str, torch.Tensor]:
     """Compute all Maxwell 2-D loss terms.
 
     Returns dict with 'pde', 'top', 'bottom', 'periodic', 'total'.
     """
-    L_pde = maxwell_2d_pde_loss(model, pts["x_int"], pts["z_int"], physics)
-    L_top = maxwell_2d_top_bc_loss(model, pts["x_top"], pts["z_top"], physics)
-    L_bot = maxwell_2d_bottom_bc_loss(model, pts["x_bot"], pts["z_bot"], physics)
+    L_pde = maxwell_2d_pde_loss(model, pts["x_int"], pts["z_int"], physics, scattered)
+    L_top = maxwell_2d_top_bc_loss(model, pts["x_top"], pts["z_top"], physics, scattered)
+    L_bot = maxwell_2d_bottom_bc_loss(model, pts["x_bot"], pts["z_bot"], physics, scattered)
     L_per = maxwell_2d_periodic_bc_loss(model, pts["x_left"], pts["z_per"], pts["x_right"])
     total = w_pde * L_pde + w_top * L_top + w_bot * L_bot + w_per * L_per
-    return {
-        "pde": L_pde, "top": L_top, "bottom": L_bot,
-        "periodic": L_per, "total": total,
-    }
+    return {"pde": L_pde, "top": L_top, "bottom": L_bot, "periodic": L_per, "total": total}
 
 
-# ---------------------------------------------------------------------------
-# Incident field reference (for diagnostics)
-# ---------------------------------------------------------------------------
-
-
-def incident_field_2d(
-    x: torch.Tensor,
-    z: torch.Tensor,
+def evaluate_losses_from_checkpoint(
+    ckpt_path: str,
+    pts: dict[str, torch.Tensor],
     physics: "PhysicsConfig",
-) -> tuple[torch.Tensor, torch.Tensor]:
-    """E_inc(x, z) = exp(-ik0 z): Re = cos(k0 z), Im = -sin(k0 z)."""
-    phase = physics.k0 * z
-    return torch.cos(phase), -torch.sin(phase)
+    w_pde: float,
+    w_top: float,
+    w_bot: float,
+    w_per: float,
+    scattered: bool = False,
+) -> dict[str, float]:
+    """Load checkpoint and evaluate losses on given collocation points.
+
+    Used for checkpoint consistency verification: the reloaded model
+    must produce the same loss as the in-memory model at save time.
+    """
+    ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+    cfg  = ckpt["config"]
+    dev  = torch.device("cpu")
+    dt   = torch.float64
+
+    # Infer architecture from checkpoint's model_state_dict rather than config
+    # (CLI may have overridden hidden_layers/width vs config defaults)
+    state = ckpt["model_state_dict"]
+    # Count linear layers to infer depth; first linear: net.0.weight shape (width, in_dim)
+    first_w = state["net.0.weight"]
+    in_dim = int(first_w.shape[1])
+    hidden_width_ckpt = int(first_w.shape[0])
+    # Count hidden layers: every other key in net is a linear layer
+    linear_keys = [k for k in state if k.endswith(".weight")]
+    hidden_layers_ckpt = len(linear_keys) - 1  # subtract output layer
+    num_fourier = ckpt.get("num_fourier_levels", in_dim // 4)
+
+    model = Maxwell2DMLP(
+        cfg.physics,
+        hidden_layers=hidden_layers_ckpt,
+        hidden_width=hidden_width_ckpt,
+        num_fourier_levels=num_fourier,
+    ).to(device=dev, dtype=dt)
+    model.load_state_dict(ckpt["model_state_dict"])
+    model.eval()
+
+    # Move pts to cpu/float64
+    pts_cpu = {k: v.to(device=dev, dtype=dt) for k, v in pts.items()}
+
+    with torch.enable_grad():
+        losses = maxwell_2d_total_loss(model, pts_cpu, physics, w_pde, w_top, w_bot, w_per, scattered)
+
+    return {
+        "best_epoch":       int(ckpt.get("best_epoch", -1)),
+        "saved_best_loss":  float(ckpt.get("best_loss", float("nan"))),
+        "eval_total":       float(losses["total"].detach()),
+        "eval_pde":         float(losses["pde"].detach()),
+        "eval_top":         float(losses["top"].detach()),
+        "eval_bottom":      float(losses["bottom"].detach()),
+        "eval_periodic":    float(losses["periodic"].detach()),
+    }

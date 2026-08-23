@@ -1,0 +1,18 @@
+{
+  "case": "homogeneous",
+  "scattered": false,
+  "best_epoch": 2900,
+  "best_loss": 0.008279745833953026,
+  "checkpoint_audit": {
+    "best_epoch": 2900,
+    "saved_best_loss": 0.008279745833953026,
+    "eval_total": 0.009557426824071867,
+    "eval_pde": 0.009225718058259764,
+    "eval_top": 6.053469601926707e-07,
+    "eval_bottom": 2.9035285715767644e-07,
+    "eval_periodic": 3.58163579048752e-32
+  },
+  "grid_top_E_mse": 2.328987889203137e-07,
+  "grid_top_H_mse": 1.0,
+  "reference": {}
+}

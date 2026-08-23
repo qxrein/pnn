@@ -1,0 +1,15 @@
+{
+  "case": "homogeneous",
+  "scattered": true,
+  "analytical_errors": {
+    "relative_l2_real": 0.003814729344564902,
+    "relative_l2_imag": 0.00729523524401216,
+    "relative_l2_magnitude": 0.0049475064018021635,
+    "relative_complex_l2": 0.005814704171385838,
+    "relative_l2_phase_aligned": 0.00556687996063108,
+    "phase_rmse_deg": 0.14596374580882723,
+    "global_phase_offset_deg": -0.09603390177016738,
+    "x_variation_std": 0.00399232122229701
+  },
+  "status": "PASS"
+}

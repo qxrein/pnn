@@ -267,12 +267,24 @@ def main() -> None:
     parser.add_argument("--output", default="outputs/reference_grating.npz")
     parser.add_argument("--n-harmonics", type=int, default=25)
     parser.add_argument("--convergence-check", action="store_true")
+    parser.add_argument("--period", type=float, default=None,
+                        help="Override period (in units of wavelength). Default: use config.")
+    parser.add_argument("--ridge-width-fraction", type=float, default=None,
+                        help="ridge_width / period. Default: keep config value.")
     args = parser.parse_args()
 
     config_path = Path(args.config)
     if not config_path.is_absolute():
         config_path = ROOT / config_path
     config = load_config(config_path)
+
+    # Override period if requested
+    if args.period is not None:
+        new_period = args.period * config.physics.wavelength
+        fill = args.ridge_width_fraction or (config.physics.ridge_width / config.physics.period)
+        config.physics.period = new_period
+        config.physics.ridge_width = fill * new_period
+        print(f"  Override: period={new_period:.4f}  ridge_width={config.physics.ridge_width:.4f}")
 
     output_path = Path(args.output)
     if not output_path.is_absolute():

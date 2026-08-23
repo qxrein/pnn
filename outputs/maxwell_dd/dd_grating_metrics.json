@@ -1,0 +1,12 @@
+{
+  "case": "grating",
+  "errors": {
+    "relative_l2_real": 0.5138613169550829,
+    "relative_l2_imag": 0.418812918525163,
+    "relative_l2_magnitude": 0.44556892156257244,
+    "relative_complex_l2": 0.47030870594672036,
+    "relative_l2_phase_aligned": 0.4694224946246148,
+    "phase_rmse_deg": 35.23329675620649,
+    "global_phase_offset_deg": -1.89687322226016
+  }
+}

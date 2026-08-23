@@ -1,0 +1,18 @@
+{
+  "case": "layered",
+  "scattered": true,
+  "best_epoch": 4400,
+  "best_loss": 0.23878566177866395,
+  "checkpoint_audit": {
+    "best_epoch": 4400,
+    "saved_best_loss": 0.23878566177866395,
+    "eval_total": 0.2982857565888516,
+    "eval_pde": 0.29774997207818626,
+    "eval_top": 6.513983197998727e-07,
+    "eval_bottom": 2.1008535076538176e-06,
+    "eval_periodic": 2.2128213956403932e-32
+  },
+  "grid_top_E_mse": 4.1144494245838084e-07,
+  "grid_top_H_mse": NaN,
+  "reference": {}
+}

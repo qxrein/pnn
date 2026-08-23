@@ -1,0 +1,15 @@
+{
+  "top_bc_E_mse": 1.2076940120328195,
+  "top_bc_H_mse": 1.2906600868940425,
+  "best_total_loss": 6.7573102194941885,
+  "epochs": 20000,
+  "reference_comparison": {
+    "relative_l2_real": 0.5876985400528325,
+    "relative_l2_imag": 0.6617822660482514,
+    "relative_l2_magnitude": 0.5182798587319758,
+    "relative_complex_l2": 0.624617223013337,
+    "relative_l2_phase_aligned": 0.5767702654369264,
+    "phase_rmse_deg": 41.058983525161686,
+    "global_phase_offset_deg": 20.02305286028007
+  }
+}

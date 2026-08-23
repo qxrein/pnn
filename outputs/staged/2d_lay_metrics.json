@@ -1,0 +1,15 @@
+{
+  "case": "layered",
+  "scattered": true,
+  "analytical_errors": {
+    "relative_l2_real": 0.4689330241486909,
+    "relative_l2_imag": 0.7835990981795712,
+    "relative_l2_magnitude": 0.34786626546720467,
+    "relative_complex_l2": 0.6081551017695503,
+    "relative_l2_phase_aligned": 0.5969309399138822,
+    "phase_rmse_deg": 52.14332528349998,
+    "global_phase_offset_deg": 7.96217187033949,
+    "x_variation_std": 0.0008780206897615024
+  },
+  "status": "FAIL"
+}

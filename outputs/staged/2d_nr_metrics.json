@@ -1,0 +1,36 @@
+{
+  "case": "non_rayleigh",
+  "scattered": true,
+  "rcwa_errors": {
+    "relative_l2_real": 0.5223291014265994,
+    "relative_l2_imag": 0.4255628780857513,
+    "relative_l2_magnitude": 0.4473650244292962,
+    "relative_complex_l2": 0.4779824216857345,
+    "relative_l2_phase_aligned": 0.47645461054836485,
+    "phase_rmse_deg": 35.82935324290086,
+    "global_phase_offset_deg": -2.5170711466723277
+  },
+  "status": "FAIL",
+  "diffraction_pinn": {
+    "R_total": 1.2601495836622894,
+    "T_total": 0.2729991881194216,
+    "R0": 1.2601495225061754,
+    "T0": 0.27299906922609035,
+    "R1": 4.7863360845869626e-08,
+    "T1": 5.574396975058104e-08,
+    "energy_check": 1.533148771781711,
+    "z_monitor_top": 0.2,
+    "z_monitor_bot": 1.8
+  },
+  "diffraction_rcwa": {
+    "R_total": 1.0000000000000004,
+    "T_total": 1.4500000000000006,
+    "R0": 1.0000000000000004,
+    "T0": 1.4500000000000006,
+    "R1": 1.352563227284558e-32,
+    "T1": 1.8627055612998327e-32,
+    "energy_check": 2.450000000000001,
+    "z_monitor_top": 0.2,
+    "z_monitor_bot": 1.8
+  }
+}
