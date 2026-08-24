@@ -9,36 +9,64 @@ The LBG PINN predicts **scattered** fields:
 The RCWA reference contains the **total** field:
     field_representation = "total"
 
-This module implements two explicit comparison modes:
+Canonical extraction APIs
+--------------------------
+Two functions handle the two possible input representations.  Never mix them.
 
-    "total"
-        Compare E_total_pinn directly against E_total_rcwa.
+``extract_total_modal_amplitudes(E_total_2d, ..., formulation)``
+    Input is the total field E_total = E_bg + E_scat.
+    At the top monitor the background is subtracted to isolate reflections:
+        "free_space":  E_refl = E_total(z_top) - E_inc(z_top)
+        "layered_bg":  E_refl = E_total(z_top) - E_bg(z_top)
+                              = E_total(z_top) - [E_inc + r_eff*exp(+ik1*z_top)]
+    At the bottom monitor the total field carries only outgoing waves:
+        t_m = DFT[E_total(z_bot)]
 
-    "scattered"
-        Subtract the background from the RCWA reference:
-            E_scat_rcwa = E_total_rcwa - E_bg
-        Then compare E_scat_pinn against E_scat_rcwa.
+``extract_scattered_modal_amplitudes(E_scat_2d, ..., formulation, coeff)``
+    Input is the scattered field only (E_total - E_bg).
+    At the top monitor the scattered field already has the background removed:
+        r_m_scat = DFT[E_scat(z_top)]   (no further subtraction)
+    At the bottom monitor:
+        t_m_scat = DFT[E_scat(z_bot)]
 
-For the free-space PINN (E_total = E_inc + E_scat), `E_bg = E_inc`.
+The public legacy function ``extract_modal_amplitudes`` is a wrapper that now
+requires an explicit ``formulation`` argument and delegates to the canonical API.
 
-All metrics are computed for both representations.
+Region masks
+------------
+``compare_fields`` accepts an optional ``region_mask`` parameter:
+    "air"           — z < ridge_base_z only
+    "grating"       — ridge_z_min <= z <= ridge_z_max
+    "substrate"     — z > ridge_z_max only
+    "external_only" — air + substrate (excludes grating interior)
+    "full_domain"   — all points (default; raises warning if grating interior
+                      has non-trivial E_scat since RCWA total field there is not
+                      directly comparable to a scattered-field PINN output)
+
+If ``region_mask`` is not "full_domain", only the masked points contribute to
+metrics and field arrays are masked in the returned dict.
+
+Metadata
+--------
+Every metric dict returned by compare_fields, extract_total_modal_amplitudes,
+and extract_scattered_modal_amplitudes includes:
+    pinn_representation:   "total" or "scattered"
+    reference_representation: "total" or "scattered"
+    formulation:           "free_space" or "layered_bg"
+    background_added:      bool
+    monitor_plane_top_z:   float
+    monitor_plane_bot_z:   float
+    reference_plane_refl_z: float (always 0.0 — c_refl defined at z=0)
+    reference_plane_trans_z: float (ridge_z_max — c_trans defined there)
+    deembedding_applied:   bool
+    region_mask:           str
 
 Conventions
 -----------
-- E_inc(z) = exp(-ik0 z)
-- Background = E_bg from `maxwell_layered_bg.compute_background_coefficients`
-- field_representation key is saved in every results NPZ
-
-Modal coefficients
-------------------
-At two monitor planes (z_top inside air, z_bot inside substrate):
-    - DFT along x → modal amplitudes r_m (reflected) and t_m (transmitted)
-    - Reflected = total − incident at top monitor
-    - Transmitted = total at bottom monitor (all downward)
-    - Only propagating orders (Re kz > 0) contribute to power
-
-RCWA provides complex r_m, t_m directly from c_refl / c_trans arrays.
-PINN-derived r_m, t_m come from DFT of E_total at monitor planes.
+- E_inc(z) = exp(-ik0 z),  time convention exp(+iωt) suppressed
+- Background = E_bg from maxwell_layered_bg.compute_background_coefficients
+- z=0 top, z increases downward
+- Only propagating orders (Re kz > 0) contribute to power
 """
 
 from __future__ import annotations
@@ -52,7 +80,7 @@ if TYPE_CHECKING:
 
 
 # ---------------------------------------------------------------------------
-# Background field helper (numpy)
+# Background field helpers (numpy)
 # ---------------------------------------------------------------------------
 
 
@@ -64,7 +92,7 @@ def _incident_field_np(z: np.ndarray, k0: float) -> tuple[np.ndarray, np.ndarray
 def _background_field_np(z: np.ndarray, physics: "PhysicsConfig") -> tuple[np.ndarray, np.ndarray]:
     """Layered background field (flat substrate, no ridge).
 
-    Delegates to maxwell_layered_bg.  Returns (Ebg_r, Ebg_i).
+    Returns (Ebg_r, Ebg_i).
     """
     from src.maxwell_layered_bg import background_field_np, compute_background_coefficients
     coeff = compute_background_coefficients(physics)
@@ -72,132 +100,286 @@ def _background_field_np(z: np.ndarray, physics: "PhysicsConfig") -> tuple[np.nd
     return Ebg_r, Ebg_i
 
 
-# ---------------------------------------------------------------------------
-# Core comparison
-# ---------------------------------------------------------------------------
+def _background_coeff(physics: "PhysicsConfig") -> dict:
+    from src.maxwell_layered_bg import compute_background_coefficients
+    return compute_background_coefficients(physics)
 
 
-def compare_fields(
-    pinn_E_scat_r: np.ndarray,
-    pinn_E_scat_i: np.ndarray,
-    rcwa_E_total_r: np.ndarray,
-    rcwa_E_total_i: np.ndarray,
-    z_grid: np.ndarray,
-    physics: "PhysicsConfig",
-    formulation: str = "layered_bg",
-) -> dict:
-    """Dual comparison of PINN vs RCWA in both total and scattered representations.
+# ---------------------------------------------------------------------------
+# kz branch (matches generate_reference.py and modal_dtn.py)
+# ---------------------------------------------------------------------------
+
+def _kz_branch_array(kx_m: np.ndarray, n: float, k0: float) -> np.ndarray:
+    """Outgoing kz branch: Re>=0 for propagating, Im<0 for evanescent (decays +z)."""
+    kz2 = (n * k0) ** 2 - kx_m ** 2
+    kz = np.sqrt(kz2.astype(complex))
+    evan = kz.real < 1e-6
+    kz[evan] = -1j * np.abs(kz[evan])
+    return kz
+
+
+# ---------------------------------------------------------------------------
+# DFT helper
+# ---------------------------------------------------------------------------
+
+def _dft_amplitudes(E_slice: np.ndarray, x1d: np.ndarray,
+                    G_m: np.ndarray, period: float) -> np.ndarray:
+    """Modal amplitudes A_m = (1/Λ) ∫₀^Λ E(x) exp(-i G_m x) dx.
 
     Parameters
     ----------
-    pinn_E_scat_r, pinn_E_scat_i
-        Scattered-field output of the PINN, shape (Nz, Nx).
-        For free-space formulation, this is E_scat relative to E_inc.
-        For layered_bg formulation, this is E_scat relative to E_bg.
-    rcwa_E_total_r, rcwa_E_total_i
-        Total field from RCWA (the correct reference), shape (Nz, Nx).
-    z_grid
-        Physical z coordinates, shape (Nz, Nx) or (Nz,).
-    physics
-        PhysicsConfig for background field computation.
+    E_slice : (Nx,) complex
+    x1d     : (Nx,) float, uniform in [0, Λ)
+    G_m     : (M,) float, Bloch wavenumbers
+    period  : float
+
+    Returns (M,) complex amplitudes.
+    """
+    dx = period / len(x1d)
+    amps = np.zeros(len(G_m), dtype=complex)
+    for mi, gm in enumerate(G_m):
+        amps[mi] = np.sum(E_slice * np.exp(-1j * gm * x1d)) * dx / period
+    return amps
+
+
+# ---------------------------------------------------------------------------
+# Power efficiency helper
+# ---------------------------------------------------------------------------
+
+def _modal_power(r_m: np.ndarray, t_m: np.ndarray,
+                 kz_air_m: np.ndarray, kz_sub_m: np.ndarray,
+                 k0: float, n_orders_idx: int) -> tuple[np.ndarray, np.ndarray, float]:
+    """Return (R_m, T_m, P_inc) arrays."""
+    kz_inc = kz_air_m[n_orders_idx]
+    P_inc  = 0.5 * kz_inc.real / k0
+    R_m = np.zeros(len(r_m))
+    T_m = np.zeros(len(t_m))
+    for mi in range(len(r_m)):
+        if kz_air_m[mi].real > 1e-6:
+            R_m[mi] = (0.5 * kz_air_m[mi].real / k0 * abs(r_m[mi]) ** 2
+                       / (P_inc + 1e-30))
+        if kz_sub_m[mi].real > 1e-6:
+            T_m[mi] = (0.5 * kz_sub_m[mi].real / k0 * abs(t_m[mi]) ** 2
+                       / (P_inc + 1e-30))
+    return R_m, T_m, float(P_inc)
+
+
+# ---------------------------------------------------------------------------
+# Canonical API 1: extract from TOTAL field
+# ---------------------------------------------------------------------------
+
+def extract_total_modal_amplitudes(
+    E_total_2d: np.ndarray,
+    x1d: np.ndarray,
+    z1d: np.ndarray,
+    physics: "PhysicsConfig",
+    formulation: str = "layered_bg",
+    n_orders: int = 5,
+    z_top_frac: float = 0.08,
+    z_bot_frac: float = 0.92,
+) -> dict:
+    """Extract complex modal amplitudes r_m and t_m from E_total.
+
+    This is the canonical path for any field that represents the complete
+    electromagnetic field (E_bg + E_scat_pinn, or pure RCWA total field).
+
+    Parameters
+    ----------
+    E_total_2d : complex (Nz, Nx)
+        Total field = E_bg + E_scat_pinn (for PINN) or RCWA total.
+    x1d, z1d : grid coordinates
+    physics : PhysicsConfig
     formulation : "free_space" | "layered_bg"
-        Controls what background is subtracted.
+        Controls what background is subtracted at the top monitor to isolate
+        the reflected field.
+        - "free_space"  : E_refl = E_total(z_top) - E_inc(z_top)
+        - "layered_bg"  : E_refl = E_total(z_top) - E_bg(z_top)
+                        = E_total(z_top) - [E_inc(z_top) + r_eff*exp(+ik1*z_top)]
+    n_orders, z_top_frac, z_bot_frac : monitor geometry
 
     Returns
     -------
-    dict with keys:
-        total/*, scattered/*
-            Metrics for each representation.
-        pinn_E_total_r, pinn_E_total_i
-        pinn_E_scat_r,  pinn_E_scat_i
-        rcwa_E_total_r, rcwa_E_total_i
-        rcwa_E_scat_r,  rcwa_E_scat_i
-        field_representation_pinn  : "scattered"
-        field_representation_rcwa  : "total"
+    dict with all modal amplitudes, powers, energy check, and metadata.
     """
-    # Flatten z to 1D for background computation
-    z_1d = z_grid.ravel() if z_grid.ndim == 2 else z_grid
-    shape = pinn_E_scat_r.shape
+    k0     = physics.k0
+    n_air  = physics.n_air
+    n_sub  = physics.n_substrate
+    period = physics.period
 
-    # Background field
+    orders = np.arange(-n_orders, n_orders + 1)
+    G_m    = orders * (2.0 * np.pi / period)
+
+    # Monitor planes
+    z_top = z1d[np.argmin(np.abs(z1d - z_top_frac * physics.domain_height))]
+    z_bot = z1d[np.argmin(np.abs(z1d - z_bot_frac * physics.domain_height))]
+    iz_top = int(np.argmin(np.abs(z1d - z_top)))
+    iz_bot = int(np.argmin(np.abs(z1d - z_bot)))
+
+    kz_air_m = _kz_branch_array(G_m, n_air, k0)
+    kz_sub_m = _kz_branch_array(G_m, n_sub, k0)
+    idx0     = n_orders  # m=0 index
+
+    # Background subtraction at top monitor
     if formulation == "layered_bg":
-        Ebg_r_1d, Ebg_i_1d = _background_field_np(z_1d, physics)
-    else:  # free_space: background = incident
-        Ebg_r_1d, Ebg_i_1d = _incident_field_np(z_1d, physics.k0)
+        # Subtract full background: E_inc + reflected background
+        coeff   = _background_coeff(physics)
+        Ebg_r_1d, Ebg_i_1d = _background_field_np(np.array([z_top]), physics)
+        E_bg_top = Ebg_r_1d[0] + 1j * Ebg_i_1d[0]
+        E_refl_slice = E_total_2d[iz_top, :] - E_bg_top   # scalar broadcast
+    else:
+        # free_space: background = E_inc
+        E_inc_top    = np.exp(-1j * k0 * z_top)
+        E_refl_slice = E_total_2d[iz_top, :] - E_inc_top
 
-    Ebg_r = Ebg_r_1d.reshape(shape)
-    Ebg_i = Ebg_i_1d.reshape(shape)
+    # Transmitted: total at bottom (all outgoing)
+    E_trans_slice = E_total_2d[iz_bot, :]
 
-    # PINN total field
-    pinn_total_r = pinn_E_scat_r + Ebg_r
-    pinn_total_i = pinn_E_scat_i + Ebg_i
+    r_m = _dft_amplitudes(E_refl_slice,  x1d, G_m, period)
+    t_m = _dft_amplitudes(E_trans_slice, x1d, G_m, period)
 
-    # RCWA scattered field  (= total − background)
-    rcwa_scat_r = rcwa_E_total_r - Ebg_r
-    rcwa_scat_i = rcwa_E_total_i - Ebg_i
+    R_m, T_m, P_inc = _modal_power(r_m, t_m, kz_air_m, kz_sub_m, k0, idx0)
+    R_total = float(R_m.sum())
+    T_total = float(T_m.sum())
 
-    # Compute all metrics
-    def _metrics(pred_r, pred_i, ref_r, ref_i, label):
-        valid = (np.isfinite(pred_r) & np.isfinite(pred_i)
-                 & np.isfinite(ref_r)  & np.isfinite(ref_i))
-        pred_c = pred_r[valid] + 1j * pred_i[valid]
-        ref_c  = ref_r[valid]  + 1j * ref_i[valid]
-        pred_mag = np.abs(pred_c)
-        ref_mag  = np.abs(ref_c)
-        eps = 1e-12
-
-        complex_l2  = float(np.linalg.norm(pred_c - ref_c) /
-                            (np.linalg.norm(ref_c) + eps))
-        mag_l2      = float(np.linalg.norm(pred_mag - ref_mag) /
-                            (np.linalg.norm(ref_mag) + eps))
-        real_l2     = float(np.linalg.norm(pred_r[valid] - ref_r[valid]) /
-                            (np.linalg.norm(ref_r[valid]) + eps))
-        imag_l2     = float(np.linalg.norm(pred_i[valid] - ref_i[valid]) /
-                            (np.linalg.norm(ref_i[valid]) + eps))
-
-        # Phase RMSE (pointwise angle between complex numbers)
-        phase_err = np.angle(pred_c / (ref_c + eps))  # handles branch cut
-        phase_rmse_deg = float(np.sqrt(np.mean(phase_err**2)) * 180 / np.pi)
-
-        # Global phase offset: angle of sum(pred * conj(ref))
-        global_phase = float(np.angle(np.sum(pred_c * np.conj(ref_c))) * 180 / np.pi)
-
-        return {
-            f"{label}/complex_l2":    complex_l2,
-            f"{label}/magnitude_l2":  mag_l2,
-            f"{label}/real_l2":       real_l2,
-            f"{label}/imag_l2":       imag_l2,
-            f"{label}/phase_rmse_deg": phase_rmse_deg,
-            f"{label}/global_phase_offset_deg": global_phase,
-            f"{label}/n_valid": int(valid.sum()),
-        }
-
-    result = {}
-    result.update(_metrics(pinn_total_r, pinn_total_i,
-                           rcwa_E_total_r, rcwa_E_total_i, "total"))
-    result.update(_metrics(pinn_E_scat_r, pinn_E_scat_i,
-                           rcwa_scat_r, rcwa_scat_i, "scattered"))
-
-    # Store the four field arrays for downstream use
-    result["pinn_E_total_r"] = pinn_total_r
-    result["pinn_E_total_i"] = pinn_total_i
-    result["pinn_E_scat_r"]  = pinn_E_scat_r
-    result["pinn_E_scat_i"]  = pinn_E_scat_i
-    result["rcwa_E_total_r"] = rcwa_E_total_r
-    result["rcwa_E_total_i"] = rcwa_E_total_i
-    result["rcwa_E_scat_r"]  = rcwa_scat_r
-    result["rcwa_E_scat_i"]  = rcwa_scat_i
-    result["field_representation_pinn"] = "scattered"
-    result["field_representation_rcwa"] = "total"
-    result["formulation"] = formulation
-
-    return result
+    return {
+        # Amplitudes
+        "orders":           orders.tolist(),
+        "r_m_complex":      r_m,
+        "t_m_complex":      t_m,
+        "r_m_abs":          np.abs(r_m).tolist(),
+        "t_m_abs":          np.abs(t_m).tolist(),
+        "r_m_phase_deg":    (np.angle(r_m) * 180 / np.pi).tolist(),
+        "t_m_phase_deg":    (np.angle(t_m) * 180 / np.pi).tolist(),
+        # Power
+        "R_m":              R_m.tolist(),
+        "T_m":              T_m.tolist(),
+        "R0":               float(R_m[idx0]),
+        "T0":               float(T_m[idx0]),
+        "r0_complex":       complex(r_m[idx0]),
+        "t0_complex":       complex(t_m[idx0]),
+        "R_total":          R_total,
+        "T_total":          T_total,
+        "energy_check":     R_total + T_total,
+        "P_inc":            P_inc,
+        # Monitor geometry
+        "z_top_monitor":    float(z_top),
+        "z_bot_monitor":    float(z_bot),
+        # Metadata
+        "pinn_representation":       "total",
+        "reference_representation":  "total",
+        "formulation":               formulation,
+        "background_added":          False,
+        "background_subtracted_top": formulation,   # which bg was subtracted at top
+        "reference_plane_refl_z":    0.0,
+        "reference_plane_trans_z":   float(physics.ridge_z_max),
+        "deembedding_applied":       False,
+    }
 
 
 # ---------------------------------------------------------------------------
-# Modal coefficient extraction
+# Canonical API 2: extract from SCATTERED field
 # ---------------------------------------------------------------------------
 
+def extract_scattered_modal_amplitudes(
+    E_scat_2d: np.ndarray,
+    x1d: np.ndarray,
+    z1d: np.ndarray,
+    physics: "PhysicsConfig",
+    formulation: str = "layered_bg",
+    n_orders: int = 5,
+    z_top_frac: float = 0.08,
+    z_bot_frac: float = 0.92,
+) -> dict:
+    """Extract scattered modal amplitudes from E_scat = E_total - E_bg.
+
+    The scattered field already has the background removed.  At the top
+    monitor, NO additional subtraction is performed — the DFT of E_scat
+    at z_top directly yields the scattered reflected amplitudes.
+    At the bottom monitor, the DFT of E_scat yields scattered transmission
+    amplitudes (background subtracted for m=0 by definition).
+
+    Power for the scattered field alone is NOT required to equal 1.  Only
+    the total-field power must satisfy R+T = 1.
+
+    Parameters
+    ----------
+    E_scat_2d : complex (Nz, Nx)
+        Scattered field = E_total - E_bg.
+    x1d, z1d, physics, formulation, n_orders, z_top_frac, z_bot_frac
+        Same as extract_total_modal_amplitudes.
+
+    Returns
+    -------
+    dict with scattered modal amplitudes, powers, and metadata.
+    Note: R_scat + T_scat ≠ 1 in general.
+    """
+    k0     = physics.k0
+    n_air  = physics.n_air
+    n_sub  = physics.n_substrate
+    period = physics.period
+
+    orders = np.arange(-n_orders, n_orders + 1)
+    G_m    = orders * (2.0 * np.pi / period)
+
+    z_top = z1d[np.argmin(np.abs(z1d - z_top_frac * physics.domain_height))]
+    z_bot = z1d[np.argmin(np.abs(z1d - z_bot_frac * physics.domain_height))]
+    iz_top = int(np.argmin(np.abs(z1d - z_top)))
+    iz_bot = int(np.argmin(np.abs(z1d - z_bot)))
+
+    kz_air_m = _kz_branch_array(G_m, n_air, k0)
+    kz_sub_m = _kz_branch_array(G_m, n_sub, k0)
+    idx0     = n_orders
+
+    # No subtraction: E_scat already has background removed
+    r_m_scat = _dft_amplitudes(E_scat_2d[iz_top, :], x1d, G_m, period)
+    t_m_scat = _dft_amplitudes(E_scat_2d[iz_bot, :], x1d, G_m, period)
+
+    # Power uses the same formula but normalised by the same P_inc
+    R_m, T_m, P_inc = _modal_power(r_m_scat, t_m_scat,
+                                    kz_air_m, kz_sub_m, k0, idx0)
+    R_total = float(R_m.sum())
+    T_total = float(T_m.sum())
+
+    return {
+        "orders":           orders.tolist(),
+        "r_m_complex":      r_m_scat,
+        "t_m_complex":      t_m_scat,
+        "r_m_abs":          np.abs(r_m_scat).tolist(),
+        "t_m_abs":          np.abs(t_m_scat).tolist(),
+        "r_m_phase_deg":    (np.angle(r_m_scat) * 180 / np.pi).tolist(),
+        "t_m_phase_deg":    (np.angle(t_m_scat) * 180 / np.pi).tolist(),
+        "R_m":              R_m.tolist(),
+        "T_m":              T_m.tolist(),
+        "R0":               float(R_m[idx0]),
+        "T0":               float(T_m[idx0]),
+        "r0_complex":       complex(r_m_scat[idx0]),
+        "t0_complex":       complex(t_m_scat[idx0]),
+        "R_total":          R_total,
+        "T_total":          T_total,
+        "energy_check":     R_total + T_total,
+        "energy_check_note": (
+            "R_scat+T_scat != 1 by design: scattered field carries only "
+            "grating-scattered power. Energy conservation is checked on "
+            "the total field."
+        ),
+        "P_inc":            P_inc,
+        "z_top_monitor":    float(z_top),
+        "z_bot_monitor":    float(z_bot),
+        # Metadata
+        "pinn_representation":       "scattered",
+        "reference_representation":  "scattered",
+        "formulation":               formulation,
+        "background_added":          False,
+        "background_subtracted_top": "none — E_scat has no background to subtract",
+        "reference_plane_refl_z":    0.0,
+        "reference_plane_trans_z":   float(physics.ridge_z_max),
+        "deembedding_applied":       False,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Legacy public API — now a wrapper around extract_total_modal_amplitudes
+# ---------------------------------------------------------------------------
 
 def extract_modal_amplitudes(
     E_total_2d: np.ndarray,
@@ -207,21 +389,18 @@ def extract_modal_amplitudes(
     n_orders: int = 5,
     z_top_frac: float = 0.08,
     z_bot_frac: float = 0.92,
+    formulation: str = "layered_bg",
 ) -> dict:
     """Extract complex modal amplitudes r_m and t_m from E_total.
 
-    Uses DFT decomposition at two monitor planes.
+    Legacy wrapper around ``extract_total_modal_amplitudes``.
 
-    Reflected amplitudes:
-        E_refl(x) = E_total(x, z_top) - E_inc(z_top)
-        r_m = (1/period) * integral_0^period E_refl(x) * exp(-i G_m x) dx
+    IMPORTANT: ``formulation`` now defaults to "layered_bg".  For the
+    free-space PINN pass ``formulation="free_space"`` explicitly.
 
-    Transmitted amplitudes:
-        t_m = (1/period) * integral_0^period E_total(x, z_bot) * exp(-i G_m x) dx
-
-    Power (diffraction efficiency):
-        R_m = |r_m|^2 * Re(kz_m^air) / Re(kz_inc)
-        T_m = |t_m|^2 * Re(kz_m^sub) / Re(kz_inc)
+    The background subtracted at the top monitor depends on ``formulation``:
+        "layered_bg" : E_bg(z_top) = E_inc + r_eff*exp(+ik1*z_top)   (CORRECT)
+        "free_space" : E_inc(z_top) = exp(-ik0*z_top)
 
     Parameters
     ----------
@@ -232,95 +411,223 @@ def extract_modal_amplitudes(
     physics : PhysicsConfig
     n_orders : number of grating orders each side of zeroth (±n_orders)
     z_top_frac, z_bot_frac : monitor plane positions as fraction of domain_height
+    formulation : "layered_bg" | "free_space"
 
     Returns
     -------
-    dict:
-        orders, r_m, t_m, R_m, T_m, R_total, T_total, energy_check,
-        r_m_complex, t_m_complex
+    Same dict as extract_total_modal_amplitudes (superset of legacy keys).
     """
-    k0     = physics.k0
-    n_air  = physics.n_air
-    n_sub  = physics.n_substrate
-    period = physics.period
+    return extract_total_modal_amplitudes(
+        E_total_2d, x1d, z1d, physics,
+        formulation=formulation,
+        n_orders=n_orders,
+        z_top_frac=z_top_frac,
+        z_bot_frac=z_bot_frac,
+    )
 
-    orders = np.arange(-n_orders, n_orders + 1)
-    G_m    = orders * (2.0 * np.pi / period)
 
-    # Monitor plane indices
-    z_top = z1d[np.argmin(np.abs(z1d - z_top_frac * physics.domain_height))]
-    z_bot = z1d[np.argmin(np.abs(z1d - z_bot_frac * physics.domain_height))]
-    iz_top = np.argmin(np.abs(z1d - z_top))
-    iz_bot = np.argmin(np.abs(z1d - z_bot))
+# ---------------------------------------------------------------------------
+# Region mask helper
+# ---------------------------------------------------------------------------
 
-    # kz per order
-    kz_air_m = np.sqrt(((k0 * n_air)**2 - G_m**2).astype(complex))
-    kz_sub_m = np.sqrt(((k0 * n_sub)**2 - G_m**2).astype(complex))
-    # Outgoing branch (evanescent decays away from grating)
-    for kz in (kz_air_m, kz_sub_m):
-        evan = kz.real < 1e-6
-        kz[evan] = -1j * np.abs(kz[evan])
+def _region_mask(z_grid: np.ndarray, physics: "PhysicsConfig",
+                 region_mask: str) -> np.ndarray:
+    """Boolean mask selecting points in the requested region.
 
-    kz_inc = kz_air_m[n_orders]  # m=0 order in air
-    P_inc  = 0.5 * kz_inc.real / k0  # incident Poynting flux per unit period
+    Parameters
+    ----------
+    z_grid : (Nz,) or (Nz, Nx) — physical z coordinates
+    physics : PhysicsConfig
+    region_mask : one of
+        "full_domain"   — all True
+        "air"           — z < ridge_base_z
+        "grating"       — ridge_z_min <= z <= ridge_z_max
+        "substrate"     — z > ridge_z_max
+        "external_only" — air + substrate (excludes grating interior)
 
-    dx = period / len(x1d)
+    Returns boolean ndarray of same shape as z_grid.
+    """
+    z = z_grid.ravel() if z_grid.ndim == 2 else z_grid
+    rbase  = physics.ridge_base_z      # = ridge_z_min for this geometry
+    rmax   = physics.ridge_z_max
 
-    def _dft_slice(E_slice):
-        """Complex DFT amplitudes for each order."""
-        amps = np.zeros(len(orders), dtype=complex)
-        for mi, gm in enumerate(G_m):
-            amps[mi] = np.sum(E_slice * np.exp(-1j * gm * x1d)) * dx / period
-        return amps
+    if region_mask == "full_domain":
+        mask = np.ones(z.shape, dtype=bool)
+    elif region_mask == "air":
+        mask = z < rbase
+    elif region_mask == "grating":
+        mask = (z >= rbase) & (z <= rmax)
+    elif region_mask == "substrate":
+        mask = z > rmax
+    elif region_mask == "external_only":
+        mask = (z < rbase) | (z > rmax)
+    else:
+        raise ValueError(
+            f"Unknown region_mask '{region_mask}'. "
+            "Choose: full_domain, air, grating, substrate, external_only."
+        )
 
-    # Reflected: total at top − incident
-    E_inc_top = np.exp(-1j * k0 * z_top)  # scalar (x-independent for normal incidence)
-    E_refl_slice = E_total_2d[iz_top, :] - E_inc_top
+    if z_grid.ndim == 2:
+        return np.broadcast_to(mask[:, None], z_grid.shape).copy()
+    return mask
 
-    # Transmitted: total at bottom
-    E_trans_slice = E_total_2d[iz_bot, :]
 
-    r_m_complex = _dft_slice(E_refl_slice)
-    t_m_complex = _dft_slice(E_trans_slice)
+# ---------------------------------------------------------------------------
+# Core comparison
+# ---------------------------------------------------------------------------
 
-    # Power per order
-    R_m = np.zeros(len(orders)); T_m = np.zeros(len(orders))
-    for mi in range(len(orders)):
-        if kz_air_m[mi].real > 1e-6:
-            R_m[mi] = 0.5 * kz_air_m[mi].real / k0 * abs(r_m_complex[mi])**2 / (P_inc + 1e-30)
-        if kz_sub_m[mi].real > 1e-6:
-            T_m[mi] = 0.5 * kz_sub_m[mi].real / k0 * abs(t_m_complex[mi])**2 / (P_inc + 1e-30)
+def compare_fields(
+    pinn_E_scat_r: np.ndarray,
+    pinn_E_scat_i: np.ndarray,
+    rcwa_E_total_r: np.ndarray,
+    rcwa_E_total_i: np.ndarray,
+    z_grid: np.ndarray,
+    physics: "PhysicsConfig",
+    formulation: str = "layered_bg",
+    region_mask: str = "external_only",
+) -> dict:
+    """Dual comparison of PINN vs RCWA in both total and scattered representations.
 
-    R_total = float(R_m.sum())
-    T_total = float(T_m.sum())
-    idx0    = n_orders  # index of m=0 order
+    Valid usage
+    -----------
+    PINN scattered field vs RCWA total field.
+    Never pass a PINN scattered field as if it were total (or vice versa).
 
-    return {
-        "orders":    orders.tolist(),
-        "r_m_complex": r_m_complex,
-        "t_m_complex": t_m_complex,
-        "r_m_abs":   np.abs(r_m_complex).tolist(),
-        "t_m_abs":   np.abs(t_m_complex).tolist(),
-        "r_m_phase_deg": (np.angle(r_m_complex) * 180 / np.pi).tolist(),
-        "t_m_phase_deg": (np.angle(t_m_complex) * 180 / np.pi).tolist(),
-        "R_m":       R_m.tolist(),
-        "T_m":       T_m.tolist(),
-        "R0":        float(R_m[idx0]),
-        "T0":        float(T_m[idx0]),
-        "r0_complex": complex(r_m_complex[idx0]),
-        "t0_complex": complex(t_m_complex[idx0]),
-        "R_total":   R_total,
-        "T_total":   T_total,
-        "energy_check": R_total + T_total,
-        "z_top_monitor": float(z_top),
-        "z_bot_monitor": float(z_bot),
-        "P_inc":     float(P_inc),
-    }
+    Parameters
+    ----------
+    pinn_E_scat_r, pinn_E_scat_i : (Nz, Nx)
+        Scattered-field output of the PINN.
+        For "free_space": E_scat relative to E_inc.
+        For "layered_bg": E_scat relative to E_bg.
+    rcwa_E_total_r, rcwa_E_total_i : (Nz, Nx)
+        Total field from RCWA.
+    z_grid : (Nz, Nx) or (Nz,)
+    physics : PhysicsConfig
+    formulation : "free_space" | "layered_bg"
+    region_mask : "full_domain" | "air" | "grating" | "substrate" | "external_only"
+        Default "external_only" excludes the grating interior (1.2 < z < 1.4),
+        where the RCWA total field cannot be directly compared to a scattered
+        PINN output without eigenmodes that are not stored in the NPZ.
+        Use "full_domain" only when both fields are complete and consistent.
 
+    Returns
+    -------
+    dict with keys:
+        total/*, scattered/*     — metrics for each representation
+        pinn_E_total_r/i         — reconstructed PINN total field
+        pinn_E_scat_r/i          — PINN scattered field (input)
+        rcwa_E_total_r/i         — RCWA total field (input)
+        rcwa_E_scat_r/i          — RCWA scattered field (= total - bg)
+        metadata/*               — representation labels and provenance
+    """
+    z_1d  = z_grid.ravel() if z_grid.ndim == 2 else z_grid
+    shape = pinn_E_scat_r.shape
+
+    # Background field
+    if formulation == "layered_bg":
+        Ebg_r_1d, Ebg_i_1d = _background_field_np(z_1d, physics)
+    else:
+        Ebg_r_1d, Ebg_i_1d = _incident_field_np(z_1d, physics.k0)
+
+    Ebg_r = Ebg_r_1d.reshape(shape)
+    Ebg_i = Ebg_i_1d.reshape(shape)
+
+    # PINN total field
+    pinn_total_r = pinn_E_scat_r + Ebg_r
+    pinn_total_i = pinn_E_scat_i + Ebg_i
+
+    # RCWA scattered field
+    rcwa_scat_r = rcwa_E_total_r - Ebg_r
+    rcwa_scat_i = rcwa_E_total_i - Ebg_i
+
+    # Region mask — applied to all metric computations
+    z_for_mask = z_grid if z_grid.ndim == 2 else z_1d.reshape(shape[0], 1) * np.ones(shape)
+    active = _region_mask(z_for_mask, physics, region_mask)
+
+    def _metrics(pred_r, pred_i, ref_r, ref_i, label):
+        valid = (active
+                 & np.isfinite(pred_r) & np.isfinite(pred_i)
+                 & np.isfinite(ref_r)  & np.isfinite(ref_i))
+        if not valid.any():
+            return {
+                f"{label}/complex_l2": float("nan"),
+                f"{label}/magnitude_l2": float("nan"),
+                f"{label}/real_l2": float("nan"),
+                f"{label}/imag_l2": float("nan"),
+                f"{label}/phase_rmse_deg": float("nan"),
+                f"{label}/global_phase_offset_deg": float("nan"),
+                f"{label}/n_valid": 0,
+            }
+        pred_c = pred_r[valid] + 1j * pred_i[valid]
+        ref_c  = ref_r[valid]  + 1j * ref_i[valid]
+        eps    = 1e-12
+        pred_mag = np.abs(pred_c)
+        ref_mag  = np.abs(ref_c)
+
+        complex_l2  = float(np.linalg.norm(pred_c - ref_c) /
+                            (np.linalg.norm(ref_c) + eps))
+        mag_l2      = float(np.linalg.norm(pred_mag - ref_mag) /
+                            (np.linalg.norm(ref_mag) + eps))
+        real_l2     = float(np.linalg.norm(pred_r[valid] - ref_r[valid]) /
+                            (np.linalg.norm(ref_r[valid]) + eps))
+        imag_l2     = float(np.linalg.norm(pred_i[valid] - ref_i[valid]) /
+                            (np.linalg.norm(ref_i[valid]) + eps))
+        phase_err   = np.angle(pred_c / (ref_c + eps))
+        phase_rmse  = float(np.sqrt(np.mean(phase_err ** 2)) * 180 / np.pi)
+        global_ph   = float(np.angle(np.sum(pred_c * np.conj(ref_c))) * 180 / np.pi)
+
+        return {
+            f"{label}/complex_l2":             complex_l2,
+            f"{label}/magnitude_l2":           mag_l2,
+            f"{label}/real_l2":                real_l2,
+            f"{label}/imag_l2":                imag_l2,
+            f"{label}/phase_rmse_deg":         phase_rmse,
+            f"{label}/global_phase_offset_deg": global_ph,
+            f"{label}/n_valid":                int(valid.sum()),
+        }
+
+    result = {}
+    result.update(_metrics(pinn_total_r, pinn_total_i,
+                           rcwa_E_total_r, rcwa_E_total_i, "total"))
+    result.update(_metrics(pinn_E_scat_r, pinn_E_scat_i,
+                           rcwa_scat_r,   rcwa_scat_i,   "scattered"))
+
+    # Field arrays
+    result["pinn_E_total_r"] = pinn_total_r
+    result["pinn_E_total_i"] = pinn_total_i
+    result["pinn_E_scat_r"]  = pinn_E_scat_r
+    result["pinn_E_scat_i"]  = pinn_E_scat_i
+    result["rcwa_E_total_r"] = rcwa_E_total_r
+    result["rcwa_E_total_i"] = rcwa_E_total_i
+    result["rcwa_E_scat_r"]  = rcwa_scat_r
+    result["rcwa_E_scat_i"]  = rcwa_scat_i
+
+    # Metadata
+    result["field_representation_pinn"]  = "scattered"
+    result["field_representation_rcwa"]  = "total"
+    result["formulation"]                = formulation
+    result["background_added"]           = True
+    result["region_mask"]                = region_mask
+    result["pinn_representation"]        = "scattered"
+    result["reference_representation"]   = "total"
+    result["monitor_plane_top_z"]        = float(0.08 * physics.domain_height)
+    result["monitor_plane_bot_z"]        = float(0.92 * physics.domain_height)
+    result["reference_plane_refl_z"]     = 0.0
+    result["reference_plane_trans_z"]    = float(physics.ridge_z_max)
+    result["deembedding_applied"]        = False
+    result["ridge_base_z"]               = float(physics.ridge_base_z)
+    result["ridge_z_max"]                = float(physics.ridge_z_max)
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# compare_modal_with_rcwa
+# ---------------------------------------------------------------------------
 
 def compare_modal_with_rcwa(
     pinn_modal: dict,
-    rcwa_path: str | None,
+    rcwa_path: "str | None",
     n_harmonics_center: int,
 ) -> dict:
     """Compare PINN modal amplitudes against RCWA.
@@ -328,9 +635,9 @@ def compare_modal_with_rcwa(
     Parameters
     ----------
     pinn_modal
-        Output of extract_modal_amplitudes.
+        Output of extract_total_modal_amplitudes or extract_scattered_modal_amplitudes.
     rcwa_path
-        Path to the reference NPZ (must contain c_refl, c_trans, kx, kz_air, kz_sub).
+        Path to the reference NPZ.
     n_harmonics_center
         N such that the m=0 mode is at index N in the RCWA amplitude arrays.
 
@@ -341,67 +648,68 @@ def compare_modal_with_rcwa(
     if rcwa_path is None:
         return {"note": "no RCWA reference provided"}
 
-    import numpy as np
     from pathlib import Path
     data = np.load(Path(rcwa_path), allow_pickle=True)
     if "c_refl" not in data:
-        return {"note": "RCWA reference does not contain amplitude data (regenerate with fixed solver)"}
+        return {"note": "RCWA reference does not contain amplitude data "
+                        "(regenerate with scripts/generate_reference.py)"}
 
-    c_refl  = data["c_refl"]   # (2N+1,) complex
-    c_trans = data["c_trans"]  # (2N+1,) complex
-    kz_air  = data["kz_air"]
-    kz_sub  = data["kz_sub"]
-    kx      = data["kx"]
-    R_m_rcwa = data["R_m"]
-    T_m_rcwa = data["T_m"]
+    c_refl   = data["c_refl"].astype(complex)
+    c_trans  = data["c_trans"].astype(complex)
+    R_m_rcwa = data["R_m"].astype(float)
+    T_m_rcwa = data["T_m"].astype(float)
 
-    N = n_harmonics_center
+    N      = n_harmonics_center
     orders = np.array(pinn_modal["orders"])
-    n_orders = (len(orders) - 1) // 2
 
     r_pinn = np.array(pinn_modal["r_m_complex"])
     t_pinn = np.array(pinn_modal["t_m_complex"])
 
-    # Align PINN orders with RCWA orders (RCWA has 2N+1 orders centered at N)
     results = {}
     for mi, m in enumerate(orders):
-        rcwa_idx = N + m  # index into RCWA amplitude arrays
+        rcwa_idx = N + m
         if 0 <= rcwa_idx < len(c_refl):
-            r_rcwa_m  = c_refl[rcwa_idx]
-            t_rcwa_m  = c_trans[rcwa_idx]
-            r_pinn_m  = r_pinn[mi]
-            t_pinn_m  = t_pinn[mi]
-            R_rcwa_m  = float(R_m_rcwa[rcwa_idx]) if rcwa_idx < len(R_m_rcwa) else 0.0
-            T_rcwa_m  = float(T_m_rcwa[rcwa_idx]) if rcwa_idx < len(T_m_rcwa) else 0.0
-            R_pinn_m  = float(pinn_modal["R_m"][mi])
-            T_pinn_m  = float(pinn_modal["T_m"][mi])
+            r_rcwa_m = c_refl[rcwa_idx]
+            t_rcwa_m = c_trans[rcwa_idx]
+            r_pinn_m = r_pinn[mi]
+            t_pinn_m = t_pinn[mi]
+            R_rcwa_m = float(R_m_rcwa[rcwa_idx]) if rcwa_idx < len(R_m_rcwa) else 0.0
+            T_rcwa_m = float(T_m_rcwa[rcwa_idx]) if rcwa_idx < len(T_m_rcwa) else 0.0
+            R_pinn_m = float(pinn_modal["R_m"][mi])
+            T_pinn_m = float(pinn_modal["T_m"][mi])
             results[f"m={m}"] = {
-                "r_pinn_abs":  float(abs(r_pinn_m)),
-                "r_rcwa_abs":  float(abs(r_rcwa_m)),
+                "r_pinn_abs":       float(abs(r_pinn_m)),
+                "r_rcwa_abs":       float(abs(r_rcwa_m)),
                 "r_pinn_phase_deg": float(np.angle(r_pinn_m) * 180 / np.pi),
                 "r_rcwa_phase_deg": float(np.angle(r_rcwa_m) * 180 / np.pi),
-                "r_abs_err":   float(abs(abs(r_pinn_m) - abs(r_rcwa_m))),
-                "r_phase_err_deg": float(abs(np.angle(r_pinn_m / (r_rcwa_m + 1e-30)) * 180 / np.pi)),
-                "t_pinn_abs":  float(abs(t_pinn_m)),
-                "t_rcwa_abs":  float(abs(t_rcwa_m)),
+                "r_abs_err":        float(abs(abs(r_pinn_m) - abs(r_rcwa_m))),
+                "r_phase_err_deg":  float(abs(
+                    np.angle(r_pinn_m / (r_rcwa_m + 1e-30)) * 180 / np.pi)),
+                "t_pinn_abs":       float(abs(t_pinn_m)),
+                "t_rcwa_abs":       float(abs(t_rcwa_m)),
                 "t_pinn_phase_deg": float(np.angle(t_pinn_m) * 180 / np.pi),
                 "t_rcwa_phase_deg": float(np.angle(t_rcwa_m) * 180 / np.pi),
-                "t_abs_err":   float(abs(abs(t_pinn_m) - abs(t_rcwa_m))),
-                "t_phase_err_deg": float(abs(np.angle(t_pinn_m / (t_rcwa_m + 1e-30)) * 180 / np.pi)),
+                "t_abs_err":        float(abs(abs(t_pinn_m) - abs(t_rcwa_m))),
+                "t_phase_err_deg":  float(abs(
+                    np.angle(t_pinn_m / (t_rcwa_m + 1e-30)) * 180 / np.pi)),
                 "R_pinn": R_pinn_m, "R_rcwa": R_rcwa_m,
                 "T_pinn": T_pinn_m, "T_rcwa": T_rcwa_m,
             }
 
-    # RCWA energy check from file
     R_rcwa_total = float(np.sum(R_m_rcwa))
     T_rcwa_total = float(np.sum(T_m_rcwa))
     results["summary"] = {
-        "R_pinn_total": pinn_modal["R_total"],
-        "T_pinn_total": pinn_modal["T_total"],
+        "R_pinn_total":      pinn_modal["R_total"],
+        "T_pinn_total":      pinn_modal["T_total"],
         "pinn_energy_check": pinn_modal["energy_check"],
-        "R_rcwa_total": R_rcwa_total,
-        "T_rcwa_total": T_rcwa_total,
+        "R_rcwa_total":      R_rcwa_total,
+        "T_rcwa_total":      T_rcwa_total,
         "rcwa_energy_check": R_rcwa_total + T_rcwa_total,
+        # Provenance: carry through whatever representation the extractor used
+        "pinn_representation":    pinn_modal.get("pinn_representation", "unknown"),
+        "formulation":            pinn_modal.get("formulation", "unknown"),
+        "background_subtracted_top": pinn_modal.get(
+            "background_subtracted_top", "unknown"),
     }
     return results
 
@@ -409,7 +717,6 @@ def compare_modal_with_rcwa(
 # ---------------------------------------------------------------------------
 # Flat-background zero-contrast test
 # ---------------------------------------------------------------------------
-
 
 def flat_contrast_test(
     pinn_E_scat_r: np.ndarray,
@@ -423,18 +730,19 @@ def flat_contrast_test(
 ) -> dict:
     """Zero-contrast test: when ridge contrast = 0, E_scat should be ~0.
 
-    Parameters
-    ----------
-    Accepts the same PINN scatter outputs for a **flat** physics config
-    (n_ridge = n_substrate).
+    For a flat grating (n_ridge == n_substrate):
+        E_scat = 0  everywhere
+        E_total = E_bg
+        t_m(m≠0) = 0,  r_m(m≠0) = 0
 
-    Returns pass/fail status and max |E_scat|.
+    Pass the PINN scattered field for this test (not the total field).
+
+    Returns pass/fail and max |E_scat|.
     """
-    max_scat = float(np.max(np.sqrt(pinn_E_scat_r**2 + pinn_E_scat_i**2)))
+    max_scat = float(np.max(np.sqrt(pinn_E_scat_r ** 2 + pinn_E_scat_i ** 2)))
     passed   = max_scat < tol
 
-    # Total field should equal background
-    z_1d = z_grid.ravel() if z_grid.ndim == 2 else z_grid
+    z_1d  = z_grid.ravel() if z_grid.ndim == 2 else z_grid
     shape = pinn_E_scat_r.shape
     if formulation == "layered_bg":
         Ebg_r_1d, Ebg_i_1d = _background_field_np(z_1d, physics)
@@ -449,19 +757,21 @@ def flat_contrast_test(
     max_diff_i = float(np.max(np.abs(E_total_i - Ebg_i)))
 
     return {
-        "max_E_scat_magnitude": max_scat,
-        "max_total_minus_bg_r": max_diff_r,
-        "max_total_minus_bg_i": max_diff_i,
-        "passed": passed,
-        "tolerance": tol,
+        "max_E_scat_magnitude":  max_scat,
+        "max_total_minus_bg_r":  max_diff_r,
+        "max_total_minus_bg_i":  max_diff_i,
+        "passed":                passed,
+        "tolerance":             tol,
         "note": "For zero contrast, E_scat should be ~0 and E_total ~ E_bg",
+        # Metadata
+        "pinn_representation":        "scattered",
+        "formulation":                formulation,
     }
 
 
 # ---------------------------------------------------------------------------
 # Print summary
 # ---------------------------------------------------------------------------
-
 
 def print_comparison_summary(result: dict, rcwa_modal: dict | None = None) -> None:
     """Print a formatted summary of the dual comparison."""
@@ -471,6 +781,7 @@ def print_comparison_summary(result: dict, rcwa_modal: dict | None = None) -> No
     print(f"  PINN formulation:  {result.get('formulation', '?')}")
     print(f"  PINN outputs:      {result.get('field_representation_pinn', '?')}")
     print(f"  RCWA reference:    {result.get('field_representation_rcwa', '?')}")
+    print(f"  Region mask:       {result.get('region_mask', '?')}")
     print()
 
     for label in ("total", "scattered"):
@@ -486,7 +797,8 @@ def print_comparison_summary(result: dict, rcwa_modal: dict | None = None) -> No
         print("  [MODAL COMPARISON vs RCWA]")
         sm = rcwa_modal.get("summary", {})
         for k, v in sm.items():
-            print(f"    {k:35s}: {v:.4f}" if isinstance(v, float) else f"    {k}: {v}")
+            print(f"    {k:35s}: {v:.4f}" if isinstance(v, float)
+                  else f"    {k}: {v}")
         print()
         for m_key, m_val in rcwa_modal.items():
             if m_key.startswith("m=") and isinstance(m_val, dict):
@@ -504,9 +816,8 @@ def print_comparison_summary(result: dict, rcwa_modal: dict | None = None) -> No
 
 
 # ---------------------------------------------------------------------------
-# Modal data loss using RCWA reference amplitudes
+# Modal data loss using RCWA reference amplitudes (training loss)
 # ---------------------------------------------------------------------------
-
 
 def modal_data_loss(
     subnet,
@@ -523,33 +834,31 @@ def modal_data_loss(
 ) -> "torch.Tensor":
     """Supervised modal data loss: ||E_scat_pinn_m - E_scat_rcwa_m||^2 per order.
 
-    Derivation
-    ----------
-    LBG PINN outputs E_scat.  RCWA stores total field amplitudes c_refl / c_trans
-    at the grating boundaries:
-      - c_refl[N+m] at z=0       (reflected wave amplitude, upward)
-      - c_trans[N+m] at ridge_z_max  (transmitted wave amplitude, downward)
+    This function operates on SCATTERED field subnets (LBG PINN output).
+    The target for each order is derived from RCWA total amplitudes by:
+      1. De-embedding from reference plane to monitor plane.
+      2. Subtracting background:
+           Bottom: full E_bg(z_val)  for m=0
+           Top:    reflected bg only r_eff*exp(+ik1*z_val)  for m=0
+           m≠0:    no subtraction (background is x-independent, contributes 0)
 
-    De-embedding to monitor plane z_val:
-      Bottom (downward wave): A(z_val) = c_trans * exp(-i kz_m * (z_val - z_sub_top))
-      Top    (upward wave):   A(z_val) = c_refl  * exp(+i kz_m * (z_val - 0))
-                                       = c_refl  * exp(+i kz_m * z_val)
-    Note: for upward waves at z>0 (z_val = 0.08*H > 0):
-      kz_m branch gives Re(kz)>0 for propagating, Im(kz)<0 for evanescent.
-      exp(+i kz_m * z_val) with Im(kz)<0 → decays (correct).
+    Background subtraction at top boundary
+    ----------------------------------------
+    At the top monitor the PINN scattered field has already removed the
+    full background (E_inc + E_bg_refl).  The RCWA c_refl includes the
+    m=0 total reflected amplitude.  The scattered target is:
 
-    PINN E_scat at the monitor = DFT of E_scat_pinn(x, z_val).
+        A_scat_top_m0 = A_total_m0(z_top) - E_bg_refl_m0(z_top)
 
-    Target E_scat_m = A_total_m(z_val) - E_bg_m(z_val):
-      - Background E_bg has no grating orders (flat interface), so E_bg_m=0 for m≠0.
-      - For m=0:
-          Bottom: E_bg = tau * exp(-ik2*(z_val-z_int))  [full background transmitted]
-          Top:    E_bg_refl = r_eff * exp(+ik1*z_val)   [only reflected BG, no incident]
-                  The incident wave is NOT in E_scat, so subtract only reflected BG.
+    where E_bg_refl_m0 = r_eff * exp(+ik1*z_val) is the reflected background
+    component ONLY (not the incident wave, which is not part of E_scat).
 
-    Evanescent orders (Im(kz)<0): exp(±i kz * z) decays naturally.  We skip them
-    by default (weight_evanescent=0) because the PINN scatter at the monitor is
-    dominated by propagating orders.
+    This is DIFFERENT from extract_total_modal_amplitudes which subtracts
+    E_bg = E_inc + E_bg_refl at the top monitor.  The difference:
+      - extract_total_modal_amplitudes: removes total background from total field
+      - modal_data_loss: removes reflected-bg from total RCWA target so it
+        matches the LBG PINN scattered amplitude
+    Both are correct for their respective purposes.
     """
     import torch
     from src.modal_dtn import _kz_outgoing
@@ -571,25 +880,20 @@ def modal_data_loss(
     kz_m    = _kz_outgoing(kx_m, n_medium, k0)
     dx      = period / N_x
 
-    # Background field at monitor for m=0 subtraction
     coeff = compute_background_coefficients(physics)
 
     if boundary == "bottom":
-        z_rcwa_ref = physics.ridge_z_max   # c_trans defined here
-        # Full background at monitor (includes both incident+reflected propagation
-        # through the substrate)
+        z_rcwa_ref = physics.ridge_z_max
         Ebg_r_v, Ebg_i_v, _, _ = background_field_np(np.array([z_val]), coeff)
         E_bg_m0 = complex(float(Ebg_r_v[0]), float(Ebg_i_v[0]))
-    else:
-        z_rcwa_ref = 0.0   # c_refl defined at z=0
-        # At top monitor, E_bg = E_inc + E_bg_refl
-        # PINN E_scat does NOT include the incident wave.
-        # E_scat_rcwa_top = c_refl_prop - (E_bg_refl only, NOT incident)
-        # The background reflected component at z_val:
-        r_eff = coeff['r_eff']; k1 = coeff['k1']
-        E_bg_m0 = r_eff * np.exp(+1j * k1 * z_val)   # only reflected BG at top
+    else:  # top
+        z_rcwa_ref = 0.0
+        # At top: subtract reflected background only (not incident)
+        r_eff = coeff["r_eff"]
+        k1    = coeff["k1"]
+        E_bg_m0 = r_eff * np.exp(+1j * k1 * z_val)
 
-    loss = torch.zeros(1, dtype=torch.float64)
+    loss     = torch.zeros(1, dtype=torch.float64)
     n_active = 0
     debug_rows = []
 
@@ -598,53 +902,47 @@ def modal_data_loss(
         if rcwa_idx < 0 or rcwa_idx >= len(rcwa_amplitudes):
             continue
 
-        A_rcwa = complex(rcwa_amplitudes[rcwa_idx])
-        kz = kz_m[i_m]
+        A_rcwa  = complex(rcwa_amplitudes[rcwa_idx])
+        kz      = kz_m[i_m]
         is_prop = kz.real > 1e-6
-        w = weight_propagating if is_prop else weight_evanescent
+        w       = weight_propagating if is_prop else weight_evanescent
         if w == 0:
             if verbose:
-                debug_rows.append((m, 'skip', abs(A_rcwa), 0.0, 0.0, 0.0))
+                debug_rows.append((m, "skip", abs(A_rcwa), 0.0, 0.0, 0.0))
             continue
 
         # De-embed to monitor plane
         if boundary == "bottom":
-            dz = z_val - z_rcwa_ref          # positive (monitor below ref)
-            phase_factor = np.exp(-1j * kz * dz)  # downward wave
+            dz           = z_val - z_rcwa_ref
+            phase_factor = np.exp(-1j * kz * dz)
         else:
-            dz = z_val - z_rcwa_ref          # positive (monitor below z=0 in z↓ convention)
-            phase_factor = np.exp(+1j * kz * dz)  # upward wave
+            dz           = z_val - z_rcwa_ref
+            phase_factor = np.exp(+1j * kz * dz)
 
-        A_at_monitor = A_rcwa * phase_factor    # total field amplitude at monitor
-
-        # Scattered field target = total - background (background only at m=0)
-        if m == 0:
-            A_scat_target = A_at_monitor - E_bg_m0
-        else:
-            A_scat_target = A_at_monitor        # no background at m≠0
+        A_at_monitor  = A_rcwa * phase_factor
+        A_scat_target = A_at_monitor - E_bg_m0 if m == 0 else A_at_monitor
 
         target_r = float(A_scat_target.real)
         target_i = float(A_scat_target.imag)
 
-        # DFT of PINN scattered field
         gm    = float(m) * G0
         x_np  = x_uni.detach().numpy()
         cos_j = torch.as_tensor(np.cos(gm * x_np), dtype=torch.float64)
         sin_j = torch.as_tensor(np.sin(gm * x_np), dtype=torch.float64)
 
-        Em_r = (dx / period) * torch.sum(Er_s * cos_j + Ei_s * sin_j)
-        Em_i = (dx / period) * torch.sum(Ei_s * cos_j - Er_s * sin_j)
+        Em_r  = (dx / period) * torch.sum(Er_s * cos_j + Ei_s * sin_j)
+        Em_i  = (dx / period) * torch.sum(Ei_s * cos_j - Er_s * sin_j)
 
-        loss = loss + w * ((Em_r - target_r)**2 + (Em_i - target_i)**2)
+        loss      = loss + w * ((Em_r - target_r) ** 2 + (Em_i - target_i) ** 2)
         n_active += 1
 
         if verbose:
-            Em_c = complex(float(Em_r.detach()), float(Em_i.detach()))
+            Em_c    = complex(float(Em_r.detach()), float(Em_i.detach()))
             err_abs = abs(Em_c - A_scat_target)
             err_ph  = abs(np.angle(Em_c / (A_scat_target + 1e-30)) * 180 / np.pi)
-            debug_rows.append((m, 'prop' if is_prop else 'evan',
-                               abs(A_rcwa), abs(A_at_monitor), abs(A_scat_target),
-                               abs(Em_c), err_abs, err_ph))
+            debug_rows.append((m, "prop" if is_prop else "evan",
+                               abs(A_rcwa), abs(A_at_monitor),
+                               abs(A_scat_target), abs(Em_c), err_abs, err_ph))
 
     if verbose:
         print(f"  Modal loss debug ({boundary}, z={z_val:.3f}, z_ref={z_rcwa_ref:.3f}):")
@@ -670,35 +968,32 @@ def modal_data_loss_per_term(
     z_bot_monitor: float | None = None,
     n_data_orders: int = 2,
 ) -> dict:
-    """Compute individual modal loss terms L_r0, L_t0, L_tminus1, L_tplus1.
-
-    Returns a dict of named scalar tensors for logging and selective weighting.
-    """
-    import torch, math
+    """Compute individual modal loss terms L_r0, L_t0, L_tminus1, L_tplus1."""
+    import torch
+    import math
 
     if z_top_monitor is None:
         z_top_monitor = 0.08 * physics.domain_height
     if z_bot_monitor is None:
         z_bot_monitor = 0.92 * physics.domain_height
 
-    k0 = physics.k0; G0 = 2*math.pi/physics.period
+    k0 = physics.k0
+    G0 = 2 * math.pi / physics.period
     N  = rcwa_amps["N_harmonics"]
 
     from src.modal_dtn import _kz_outgoing
 
     result = {}
 
-    # -- BOTTOM: transmitted orders --
-    kz_sub = {m: _kz_outgoing(np.array([m*G0]), physics.n_substrate, k0)[0]
-              for m in range(-n_data_orders, n_data_orders+1)}
+    kz_sub = {m: _kz_outgoing(np.array([m * G0]), physics.n_substrate, k0)[0]
+              for m in range(-n_data_orders, n_data_orders + 1)}
 
     for name, m in [("t0", 0), ("tminus1", -1), ("tplus1", +1)]:
         if abs(m) > n_data_orders:
             continue
         kz = kz_sub[m]
         if kz.real <= 1e-6:
-            continue   # evanescent in substrate — skip
-
+            continue
         result[f"L_{name}"] = modal_data_loss(
             subnet_sub, z_bot_monitor, physics,
             rcwa_amps["c_trans"], N,
@@ -707,7 +1002,6 @@ def modal_data_loss_per_term(
             weight_propagating=1.0, weight_evanescent=0.0,
         )
 
-    # -- TOP: reflected m=0 only (m=±1 evanescent in air for Λ=0.8λ) --
     kz_air_0 = _kz_outgoing(np.array([0.0]), physics.n_air, k0)[0]
     if kz_air_0.real > 1e-6:
         result["L_r0"] = modal_data_loss(
@@ -730,106 +1024,59 @@ def audit_modal_loss(
     z_bot_monitor: float | None = None,
     n_data_orders: int = 2,
 ) -> dict:
-    """Full per-mode audit comparing modal_data_loss targets vs extract_modal_amplitudes.
-
-    Prints and returns a table showing:
-    - mode, boundary, monitor z, reference z
-    - PINN E_scat_m (from DFT of subnet output)
-    - RCWA target E_scat_m (de-embedded + background-subtracted)
-    - amplitude error, phase error
-    """
-    import torch, math
-
+    """Full per-mode audit: modal_data_loss targets vs extract_total_modal_amplitudes."""
     if z_top_monitor is None:
         z_top_monitor = 0.08 * physics.domain_height
     if z_bot_monitor is None:
         z_bot_monitor = 0.92 * physics.domain_height
 
-    from src.modal_dtn import _kz_outgoing
-
-    results = {}
-
-    # Bottom
     print("\n  [BOTTOM boundary audit]")
     modal_data_loss(
         subnet_sub, z_bot_monitor, physics,
         rcwa_amps["c_trans"], rcwa_amps["N_harmonics"],
         "bottom", physics.n_substrate,
         n_data_orders=n_data_orders,
-        weight_propagating=1.0, weight_evanescent=0.0,
-        verbose=True,
+        weight_propagating=1.0, weight_evanescent=0.0, verbose=True,
     )
 
-    # Top
     print("\n  [TOP boundary audit]")
     modal_data_loss(
         subnet_air, z_top_monitor, physics,
         rcwa_amps["c_refl"], rcwa_amps["N_harmonics"],
         "top", physics.n_air,
         n_data_orders=n_data_orders,
-        weight_propagating=1.0, weight_evanescent=0.0,
-        verbose=True,
+        weight_propagating=1.0, weight_evanescent=0.0, verbose=True,
     )
 
-    return results
-    """Load RCWA complex amplitudes from reference NPZ.
+    return {}
 
-    Returns dict with:
-        c_refl       : complex reflection amplitudes (2N+1,)
-        c_trans      : complex transmission amplitudes (2N+1,)
-        N_harmonics  : int, N such that m=0 is at index N
-        R_m, T_m     : modal power efficiencies
-        R_total, T_total
-    """
-    from pathlib import Path
-    data = np.load(Path(rcwa_path), allow_pickle=True)
-    required = ["c_refl", "c_trans", "R_m", "T_m"]
-    missing = [k for k in required if k not in data]
-    if missing:
-        raise ValueError(
-            f"RCWA NPZ missing keys {missing}. Regenerate with scripts/generate_reference.py "
-            f"(fixed _star version)."
-        )
-    n_orders = len(data["c_refl"])
-    N = (n_orders - 1) // 2
-    return {
-        "c_refl":       data["c_refl"].astype(complex),
-        "c_trans":      data["c_trans"].astype(complex),
-        "N_harmonics":  N,
-        "R_m":          data["R_m"],
-        "T_m":          data["T_m"],
-        "R_total":      float(data["R_total"]),
-        "T_total":      float(data["T_total"]),
-    }
 
+# ---------------------------------------------------------------------------
+# RCWA amplitude loader
+# ---------------------------------------------------------------------------
 
 def load_rcwa_amplitudes(rcwa_path: "str | Path") -> dict:
     """Load RCWA complex amplitudes from reference NPZ.
 
-    Returns dict with:
-        c_refl       : complex reflection amplitudes (2N+1,)
-        c_trans      : complex transmission amplitudes (2N+1,)
-        N_harmonics  : int, N such that m=0 is at index N
-        R_m, T_m     : modal power efficiencies
-        R_total, T_total
+    Returns dict with c_refl, c_trans, N_harmonics, R_m, T_m, R_total, T_total.
     """
     from pathlib import Path
     data = np.load(Path(rcwa_path), allow_pickle=True)
     required = ["c_refl", "c_trans", "R_m", "T_m"]
-    missing = [k for k in required if k not in data]
+    missing  = [k for k in required if k not in data]
     if missing:
         raise ValueError(
-            f"RCWA NPZ missing keys {missing}. Regenerate with scripts/generate_reference.py "
-            f"(fixed _star version)."
+            f"RCWA NPZ missing keys {missing}. "
+            "Regenerate with scripts/generate_reference.py."
         )
     n_orders = len(data["c_refl"])
-    N = (n_orders - 1) // 2
+    N        = (n_orders - 1) // 2
     return {
-        "c_refl":       data["c_refl"].astype(complex),
-        "c_trans":      data["c_trans"].astype(complex),
-        "N_harmonics":  N,
-        "R_m":          data["R_m"],
-        "T_m":          data["T_m"],
-        "R_total":      float(data["R_total"]),
-        "T_total":      float(data["T_total"]),
+        "c_refl":      data["c_refl"].astype(complex),
+        "c_trans":     data["c_trans"].astype(complex),
+        "N_harmonics": N,
+        "R_m":         data["R_m"].astype(float),
+        "T_m":         data["T_m"].astype(float),
+        "R_total":     float(data["R_total"]),
+        "T_total":     float(data["T_total"]),
     }

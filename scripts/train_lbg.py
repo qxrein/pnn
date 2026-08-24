@@ -703,18 +703,24 @@ def main() -> int:
             ref_Er, ref_Ei, _ = interpolate_reference_to_grid(ref_data, x1d, z1d)
 
             # Dual comparison: PINN scatter vs RCWA total
+            # region_mask="external_only" excludes the grating interior (ridge region)
+            # where the NPZ does not store eigenmode data.
             dual = compare_fields(
                 fields["E_scat_real"], fields["E_scat_imag"],
                 ref_Er, ref_Ei,
                 fields["z"], physics,
                 formulation=formulation,
+                region_mask="external_only",
             )
             print_comparison_summary(dual)
 
-            # Modal extraction from PINN total field
+            # Modal extraction from PINN total field.
+            # formulation must match what compare_fields used so that the correct
+            # background is subtracted at the top monitor.
             E_total_pinn = dual["pinn_E_total_r"] + 1j * dual["pinn_E_total_i"]
             modal_pinn = extract_modal_amplitudes(
                 E_total_pinn, x1d, z1d, physics, n_orders=5,
+                formulation=formulation,
             )
 
             # Modal comparison vs RCWA amplitudes stored in NPZ

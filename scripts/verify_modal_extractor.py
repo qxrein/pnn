@@ -43,6 +43,10 @@ from src.maxwell_layered_bg import (
     compute_background_coefficients,
     background_field_np,
 )
+from src.field_comparison import (
+    extract_total_modal_amplitudes,
+    extract_scattered_modal_amplitudes,
+)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -623,10 +627,13 @@ def run_verification(ref_path: Path, output_path: Path) -> dict:
     print("[D] Total-field modal extraction from stored RCWA total field")
 
     n_orders = 3   # ±3 orders (covers ±1 propagating + evanescent buffer)
-    modal_total = extract_modes_from_total_field(
+    # Use the PRODUCTION canonical function — same code path as PINN evaluation
+    modal_total = extract_total_modal_amplitudes(
         ref["E_total"], x1d, z1d, physics,
+        formulation="layered_bg",
         n_orders=n_orders, z_top_frac=0.08, z_bot_frac=0.92,
     )
+    print(f"    Production function  : extract_total_modal_amplitudes (formulation='layered_bg')")
 
     z_top_mon = modal_total["z_top_monitor"]
     z_bot_mon = modal_total["z_bot_monitor"]
@@ -763,10 +770,13 @@ def run_verification(ref_path: Path, output_path: Path) -> dict:
     # ── TEST E: Scattered-field extraction ───────────────────────────────
     print("[E] Scattered-field modal extraction from (E_total - E_bg)")
 
-    modal_scat = extract_modes_from_scattered_field(
-        E_scat_ref, x1d, z1d, physics, coeff,
+    # Use the PRODUCTION canonical function — same code path as PINN evaluation
+    modal_scat = extract_scattered_modal_amplitudes(
+        E_scat_ref, x1d, z1d, physics,
+        formulation="layered_bg",
         n_orders=n_orders, z_top_frac=0.08, z_bot_frac=0.92,
     )
+    print(f"    Production function  : extract_scattered_modal_amplitudes (formulation='layered_bg')")
 
     # Scattered-field energy NOTE:
     # R_scat + T_scat ≠ 1.  The scattered field carries only the grating-scattered
