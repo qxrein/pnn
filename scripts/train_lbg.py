@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -721,11 +722,13 @@ def main() -> int:
             modal_pinn = extract_modal_amplitudes(
                 E_total_pinn, x1d, z1d, physics, n_orders=5,
                 formulation=formulation,
+                field_representation="total",
             )
 
             # Modal comparison vs RCWA amplitudes stored in NPZ
             n_harm = 25 if tag == "grating" else 75
-            modal_rcwa = compare_modal_with_rcwa(modal_pinn, str(ref_path), n_harm)
+            modal_rcwa = compare_modal_with_rcwa(
+                modal_pinn, str(ref_path), n_harm, physics=physics)
             print_comparison_summary(dual, rcwa_modal=modal_rcwa)
 
         return dual, modal_pinn, modal_rcwa
@@ -778,17 +781,31 @@ def main() -> int:
             return [_serialise(x) for x in d]
         return d
 
+    try:
+        test_commit_hash = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    except (OSError, subprocess.CalledProcessError):
+        test_commit_hash = "unknown"
+
     report = {
         "case": tag, "epochs": args.epochs, "seed": args.seed,
         "boundary_condition": "dtn" if args.use_dtn else "robin",
         "n_dtn_orders": args.n_dtn_orders if args.use_dtn else None,
         "feature_variant": args.feature_variant,
+        "valid": False,
+        "invalid_reason": (
+            "Exploratory PINN result: not a physical validation claim until "
+            "complex modal response and energy-balance gates pass."
+        ),
         "metadata": {
             "wavelength":  float(physics.wavelength),
             "period":      float(physics.period),
             "n_air":       float(physics.n_air),
             "n_ridge":     float(physics.n_ridge),
             "n_substrate": float(physics.n_substrate),
+            "ridge_width": float(physics.ridge_width),
+            "ridge_height": float(physics.ridge_height),
+            "ridge_base_z": float(physics.ridge_base_z),
             "k0":          float(physics.k0),
             "domain_height": float(physics.domain_height),
             "field_representation_rcwa": "total",
@@ -796,6 +813,13 @@ def main() -> int:
             "coordinate_convention": "z=0 top, z increases downward, E_inc=exp(-ik0*z)",
             "z_top_monitor": float(0.08 * physics.domain_height),
             "z_bot_monitor": float(0.92 * physics.domain_height),
+            "reference_plane_refl_z": 0.0,
+            "reference_plane_trans_z": float(physics.ridge_z_max),
+            "reference_file": str(ref_path) if ref_path is not None else None,
+            "background_formulation": "free_space and layered_bg A/B",
+            "de_embedding_status": "modal extraction is at monitor planes; RCWA comparison de-embeds reference amplitudes",
+            "test_commit_hash": test_commit_hash,
+            "modal_loss_weight": float(args.w_modal),
         },
         "background_coeff": {k: str(v) for k, v in coeff.items()},
         "source_region_max": {

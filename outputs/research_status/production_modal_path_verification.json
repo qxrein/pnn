@@ -1,0 +1,67 @@
+{
+  "valid": true,
+  "invalid_reason": null,
+  "reference_file": "/Users/rein/projects/rero/pinn_optics/outputs/reference_lambda_0p8.npz",
+  "test_commit_hash": "a3b9135cf3b67872a0c17eef4f819e7a10564eab",
+  "wavelength": 1.0,
+  "period": 0.8,
+  "ridge_geometry": {
+    "width": 0.32000000000000006,
+    "height": 0.2,
+    "base_z": 1.2
+  },
+  "material_indices": {
+    "air": 1.0,
+    "ridge": 1.5,
+    "substrate": 1.45
+  },
+  "monitor_positions": {
+    "top": 0.16,
+    "bottom": 1.84
+  },
+  "reference_planes": {
+    "reflection": 0.0,
+    "transmission": 1.4
+  },
+  "field_representation": {
+    "reference": "total",
+    "production_inputs": [
+      "total",
+      "scattered"
+    ]
+  },
+  "background_formulation": "layered_bg",
+  "de_embedding_status": "applied when comparing stored RCWA amplitudes to monitor planes",
+  "background_subtraction": "E_scat = E_total - E_bg; total top reflection subtracts E_inc only",
+  "total_modal": {
+    "R_total": 0.02170616619943422,
+    "T_total": 0.978293833800619,
+    "energy_check": 1.0000000000000533,
+    "orders": [
+      -1,
+      0,
+      1
+    ]
+  },
+  "total_errors": {
+    "r_amplitude_max": 3.469446951953614e-18,
+    "t_amplitude_max": 5.551115123125783e-17,
+    "r_phase_max_deg": 3.6374891594981104e-13,
+    "t_phase_max_deg": 4.256634918462152e-15
+  },
+  "scattered_reconstructed_errors": {
+    "r_amplitude_max": 2.7755575615628914e-17,
+    "t_amplitude_max": 5.551115123125783e-17,
+    "r_phase_max_deg": 1.6941643454953098e-13,
+    "t_phase_max_deg": 4.376586209839529e-15
+  },
+  "production_path_agreement": {
+    "r_max_abs_difference": 3.1031676915590914e-17,
+    "t_max_abs_difference": 5.551115123125783e-17
+  },
+  "H_scattered_finite": true,
+  "standalone_validator": {
+    "path": "outputs/research_status/modal_extractor_verification.json",
+    "expected_assertions": "43/43"
+  }
+}

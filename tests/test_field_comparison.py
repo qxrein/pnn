@@ -191,6 +191,79 @@ class TestCompareFields:
         assert result["field_representation_pinn"] == "scattered"
         assert result["field_representation_rcwa"] == "total"
 
+    def test_partial_valid_region_mask_uses_only_requested_region(self, physics, simple_grid):
+        """An error inside the excluded grating region must not affect air metrics."""
+        X, Z, _, _ = simple_grid
+        total_r = np.cos(physics.k0 * Z)
+        total_i = -np.sin(physics.k0 * Z)
+        bg_r, bg_i, _, _ = background_field_np(Z[:, 0], compute_background_coefficients(physics))
+        scat_r = total_r - bg_r[:, None]
+        scat_i = total_i - bg_i[:, None]
+        scat_r[(Z >= physics.ridge_z_min) & (Z <= physics.ridge_z_max)] += 10.0
+        result = compare_fields(scat_r, scat_i, total_r, total_i, Z, physics,
+                                region_mask="air")
+        assert result["total/complex_l2"] < 1e-10
+        assert result["total/n_valid"] == int((Z < physics.ridge_z_min).sum())
+
+    def test_invalid_nan_region_is_excluded(self, physics, simple_grid):
+        """NaNs remove only those points from metrics, without broadcasting."""
+        X, Z, _, _ = simple_grid
+        total_r = np.cos(physics.k0 * Z)
+        total_i = -np.sin(physics.k0 * Z)
+        bg_r, bg_i, _, _ = background_field_np(Z[:, 0], compute_background_coefficients(physics))
+        scat_r = total_r - bg_r[:, None]
+        scat_i = total_i - bg_i[:, None]
+        scat_r[0, 0] = np.nan
+        result = compare_fields(scat_r, scat_i, total_r, total_i, Z, physics,
+                                region_mask="full_domain")
+        assert result["total/complex_l2"] < 1e-10
+        assert result["total/n_valid"] == Z.size - 1
+
+    def test_grating_interior_exclusion(self, physics, simple_grid):
+        """external_only must exclude all points in the grating layer."""
+        X, Z, _, _ = simple_grid
+        total_r = np.cos(physics.k0 * Z)
+        total_i = -np.sin(physics.k0 * Z)
+        bg_r, bg_i, _, _ = background_field_np(Z[:, 0], compute_background_coefficients(physics))
+        scat_r = total_r - bg_r[:, None]
+        scat_i = total_i - bg_i[:, None]
+        interior = (Z >= physics.ridge_z_min) & (Z <= physics.ridge_z_max)
+        scat_i[interior] += 5.0
+        result = compare_fields(scat_r, scat_i, total_r, total_i, Z, physics,
+                                region_mask="external_only")
+        assert result["total/complex_l2"] < 1e-10
+        assert result["total/n_valid"] == int((~interior).sum())
+
+    def test_flattened_fields_do_not_broadcast(self, physics, simple_grid):
+        """Flat fields require a same-length flat z grid and retain a flat mask."""
+        X, Z, _, _ = simple_grid
+        total = np.exp(-1j * physics.k0 * Z).ravel()
+        z_flat = Z.ravel()
+        bg_r, bg_i, _, _ = background_field_np(z_flat, compute_background_coefficients(physics))
+        scat = total - (bg_r + 1j * bg_i)
+        result = compare_fields(scat.real, scat.imag, total.real, total.imag,
+                                z_flat, physics, region_mask="external_only")
+        assert result["pinn_E_total_r"].shape == total.shape
+        assert result["total/n_valid"] <= total.size
+
+    def test_shape_mismatch_is_rejected_before_masking(self, physics, simple_grid):
+        """No NumPy broadcasting is allowed between fields and masks."""
+        _, Z, _, _ = simple_grid
+        with pytest.raises(ValueError, match="same shape"):
+            compare_fields(np.zeros((16, 8)), np.zeros((16, 8)),
+                           np.zeros((16, 7)), np.zeros((16, 7)), Z, physics)
+
+    def test_total_representation_is_compared_without_reconstruction_error(self, physics, simple_grid):
+        """The explicit total-field API must support total-vs-total comparison."""
+        _, Z, _, _ = simple_grid
+        total_r = np.cos(physics.k0 * Z)
+        total_i = -np.sin(physics.k0 * Z)
+        result = compare_fields(total_r, total_i, total_r, total_i, Z, physics,
+                                field_representation="total",
+                                reference_field_representation="total")
+        assert result["total/complex_l2"] < 1e-10
+        assert result["field_representation_pinn"] == "total"
+
 
 # ---------------------------------------------------------------------------
 # extract_modal_amplitudes

@@ -15,10 +15,10 @@ Two functions handle the two possible input representations.  Never mix them.
 
 ``extract_total_modal_amplitudes(E_total_2d, ..., formulation)``
     Input is the total field E_total = E_bg + E_scat.
-    At the top monitor the background is subtracted to isolate reflections:
-        "free_space":  E_refl = E_total(z_top) - E_inc(z_top)
-        "layered_bg":  E_refl = E_total(z_top) - E_bg(z_top)
-                              = E_total(z_top) - [E_inc + r_eff*exp(+ik1*z_top)]
+    At the top monitor the incident field is subtracted to isolate the
+    *total* reflection.  This deliberately retains the flat-background
+    reflection in the layered-background formulation:
+        E_refl,total = E_total(z_top) - E_inc(z_top)
     At the bottom monitor the total field carries only outgoing waves:
         t_m = DFT[E_total(z_bot)]
 
@@ -190,11 +190,9 @@ def extract_total_modal_amplitudes(
     x1d, z1d : grid coordinates
     physics : PhysicsConfig
     formulation : "free_space" | "layered_bg"
-        Controls what background is subtracted at the top monitor to isolate
-        the reflected field.
-        - "free_space"  : E_refl = E_total(z_top) - E_inc(z_top)
-        - "layered_bg"  : E_refl = E_total(z_top) - E_bg(z_top)
-                        = E_total(z_top) - [E_inc(z_top) + r_eff*exp(+ik1*z_top)]
+        Recorded as provenance.  Total-field extraction always subtracts
+        only E_inc at the top monitor, so r_m includes the background
+        reflection when the formulation is ``layered_bg``.
     n_orders, z_top_frac, z_bot_frac : monitor geometry
 
     Returns
@@ -219,17 +217,13 @@ def extract_total_modal_amplitudes(
     kz_sub_m = _kz_branch_array(G_m, n_sub, k0)
     idx0     = n_orders  # m=0 index
 
-    # Background subtraction at top monitor
-    if formulation == "layered_bg":
-        # Subtract full background: E_inc + reflected background
-        coeff   = _background_coeff(physics)
-        Ebg_r_1d, Ebg_i_1d = _background_field_np(np.array([z_top]), physics)
-        E_bg_top = Ebg_r_1d[0] + 1j * Ebg_i_1d[0]
-        E_refl_slice = E_total_2d[iz_top, :] - E_bg_top   # scalar broadcast
-    else:
-        # free_space: background = E_inc
-        E_inc_top    = np.exp(-1j * k0 * z_top)
-        E_refl_slice = E_total_2d[iz_top, :] - E_inc_top
+    if formulation not in {"free_space", "layered_bg"}:
+        raise ValueError("formulation must be 'free_space' or 'layered_bg'")
+
+    # Total field: remove only the incident wave.  In particular, do not
+    # subtract r_bg here: r_total = r_bg + r_scat for layered-background PINNs.
+    E_inc_top = np.exp(-1j * k0 * z_top)
+    E_refl_slice = E_total_2d[iz_top, :] - E_inc_top
 
     # Transmitted: total at bottom (all outgoing)
     E_trans_slice = E_total_2d[iz_bot, :]
@@ -269,7 +263,7 @@ def extract_total_modal_amplitudes(
         "reference_representation":  "total",
         "formulation":               formulation,
         "background_added":          False,
-        "background_subtracted_top": formulation,   # which bg was subtracted at top
+        "background_subtracted_top": "incident_only",
         "reference_plane_refl_z":    0.0,
         "reference_plane_trans_z":   float(physics.ridge_z_max),
         "deembedding_applied":       False,
@@ -377,12 +371,73 @@ def extract_scattered_modal_amplitudes(
     }
 
 
+def reconstruct_total_modal_amplitudes(
+    scattered_modal: dict,
+    physics: "PhysicsConfig",
+    formulation: str | None = None,
+) -> dict:
+    """Convert monitor-plane scattered amplitudes to total amplitudes.
+
+    The background is x-independent, so it affects m=0 only.  At the top it
+    contributes the reflected background; at the bottom it contributes the
+    transmitted background.  This is the inverse of the representation split
+    used by :func:`extract_scattered_modal_amplitudes`.
+    """
+    formulation = formulation or scattered_modal.get("formulation", "layered_bg")
+    if formulation not in {"free_space", "layered_bg"}:
+        raise ValueError("formulation must be 'free_space' or 'layered_bg'")
+
+    orders = np.asarray(scattered_modal["orders"], dtype=int)
+    idx0 = int(np.where(orders == 0)[0][0])
+    r_total = np.asarray(scattered_modal["r_m_complex"], dtype=complex).copy()
+    t_total = np.asarray(scattered_modal["t_m_complex"], dtype=complex).copy()
+    z_top = float(scattered_modal["z_top_monitor"])
+    z_bot = float(scattered_modal["z_bot_monitor"])
+
+    if formulation == "layered_bg":
+        coeff = _background_coeff(physics)
+        r_bg = coeff["r_eff"] * np.exp(1j * coeff["k1"] * z_top)
+        t_bg = coeff["tau"] * np.exp(-1j * coeff["k2"] * (z_bot - coeff["z_interface"]))
+    else:
+        r_bg = 0.0j
+        t_bg = np.exp(-1j * physics.k0 * z_bot)
+
+    r_total[idx0] += r_bg
+    t_total[idx0] += t_bg
+    n_orders = int((len(orders) - 1) // 2)
+    kz_air = _kz_branch_array(orders * (2 * np.pi / physics.period), physics.n_air, physics.k0)
+    kz_sub = _kz_branch_array(orders * (2 * np.pi / physics.period), physics.n_substrate, physics.k0)
+    R_m, T_m, P_inc = _modal_power(r_total, t_total, kz_air, kz_sub, physics.k0, n_orders)
+    return {
+        **scattered_modal,
+        "r_m_complex": r_total,
+        "t_m_complex": t_total,
+        "r_m_abs": np.abs(r_total).tolist(),
+        "t_m_abs": np.abs(t_total).tolist(),
+        "r_m_phase_deg": (np.angle(r_total) * 180 / np.pi).tolist(),
+        "t_m_phase_deg": (np.angle(t_total) * 180 / np.pi).tolist(),
+        "r0_complex": complex(r_total[idx0]),
+        "t0_complex": complex(t_total[idx0]),
+        "R_m": R_m.tolist(), "T_m": T_m.tolist(),
+        "R0": float(R_m[idx0]), "T0": float(T_m[idx0]),
+        "R_total": float(R_m.sum()), "T_total": float(T_m.sum()),
+        "energy_check": float(R_m.sum() + T_m.sum()), "P_inc": P_inc,
+        "pinn_representation": "total",
+        "reference_representation": "total",
+        "background_added": True,
+        "background_reconstructed": True,
+        "background_reflection_m0": complex(r_bg),
+        "background_transmission_m0": complex(t_bg),
+        "formulation": formulation,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Legacy public API — now a wrapper around extract_total_modal_amplitudes
 # ---------------------------------------------------------------------------
 
 def extract_modal_amplitudes(
-    E_total_2d: np.ndarray,
+    E_field_2d: np.ndarray,
     x1d: np.ndarray,
     z1d: np.ndarray,
     physics: "PhysicsConfig",
@@ -390,6 +445,7 @@ def extract_modal_amplitudes(
     z_top_frac: float = 0.08,
     z_bot_frac: float = 0.92,
     formulation: str = "layered_bg",
+    field_representation: str = "total",
 ) -> dict:
     """Extract complex modal amplitudes r_m and t_m from E_total.
 
@@ -417,13 +473,17 @@ def extract_modal_amplitudes(
     -------
     Same dict as extract_total_modal_amplitudes (superset of legacy keys).
     """
-    return extract_total_modal_amplitudes(
-        E_total_2d, x1d, z1d, physics,
-        formulation=formulation,
-        n_orders=n_orders,
-        z_top_frac=z_top_frac,
-        z_bot_frac=z_bot_frac,
-    )
+    if field_representation == "total":
+        return extract_total_modal_amplitudes(
+            E_field_2d, x1d, z1d, physics, formulation=formulation,
+            n_orders=n_orders, z_top_frac=z_top_frac, z_bot_frac=z_bot_frac,
+        )
+    if field_representation == "scattered":
+        return extract_scattered_modal_amplitudes(
+            E_field_2d, x1d, z1d, physics, formulation=formulation,
+            n_orders=n_orders, z_top_frac=z_top_frac, z_bot_frac=z_bot_frac,
+        )
+    raise ValueError("field_representation must be 'total' or 'scattered'")
 
 
 # ---------------------------------------------------------------------------
@@ -447,7 +507,9 @@ def _region_mask(z_grid: np.ndarray, physics: "PhysicsConfig",
 
     Returns boolean ndarray of same shape as z_grid.
     """
-    z = z_grid.ravel() if z_grid.ndim == 2 else z_grid
+    z = np.asarray(z_grid)
+    if z.ndim not in (1, 2):
+        raise ValueError("z_grid must be one- or two-dimensional")
     rbase  = physics.ridge_base_z      # = ridge_z_min for this geometry
     rmax   = physics.ridge_z_max
 
@@ -467,8 +529,7 @@ def _region_mask(z_grid: np.ndarray, physics: "PhysicsConfig",
             "Choose: full_domain, air, grating, substrate, external_only."
         )
 
-    if z_grid.ndim == 2:
-        return np.broadcast_to(mask[:, None], z_grid.shape).copy()
+    assert mask.shape == z.shape, (mask.shape, z.shape)
     return mask
 
 
@@ -485,6 +546,8 @@ def compare_fields(
     physics: "PhysicsConfig",
     formulation: str = "layered_bg",
     region_mask: str = "external_only",
+    field_representation: str = "scattered",
+    reference_field_representation: str = "total",
 ) -> dict:
     """Dual comparison of PINN vs RCWA in both total and scattered representations.
 
@@ -520,29 +583,49 @@ def compare_fields(
         rcwa_E_scat_r/i          — RCWA scattered field (= total - bg)
         metadata/*               — representation labels and provenance
     """
-    z_1d  = z_grid.ravel() if z_grid.ndim == 2 else z_grid
-    shape = pinn_E_scat_r.shape
+    arrays = tuple(np.asarray(a) for a in (
+        pinn_E_scat_r, pinn_E_scat_i, rcwa_E_total_r, rcwa_E_total_i))
+    shape = arrays[0].shape
+    if not shape or len(shape) > 2:
+        raise ValueError("field arrays must be flat (N,) or grid-shaped (Nz, Nx)")
+    if any(a.shape != shape for a in arrays[1:]):
+        raise ValueError("all field arrays must have exactly the same shape")
+    if field_representation not in {"total", "scattered"}:
+        raise ValueError("field_representation must be 'total' or 'scattered'")
+    if reference_field_representation not in {"total", "scattered"}:
+        raise ValueError("reference_field_representation must be 'total' or 'scattered'")
+    if formulation not in {"free_space", "layered_bg"}:
+        raise ValueError("formulation must be 'free_space' or 'layered_bg'")
+
+    z_values = _z_values_for_fields(np.asarray(z_grid), shape)
 
     # Background field
     if formulation == "layered_bg":
-        Ebg_r_1d, Ebg_i_1d = _background_field_np(z_1d, physics)
+        Ebg_r_values, Ebg_i_values = _background_field_np(z_values, physics)
     else:
-        Ebg_r_1d, Ebg_i_1d = _incident_field_np(z_1d, physics.k0)
+        Ebg_r_values, Ebg_i_values = _incident_field_np(z_values, physics.k0)
 
-    Ebg_r = Ebg_r_1d.reshape(shape)
-    Ebg_i = Ebg_i_1d.reshape(shape)
+    Ebg_r = Ebg_r_values.reshape(shape)
+    Ebg_i = Ebg_i_values.reshape(shape)
 
-    # PINN total field
-    pinn_total_r = pinn_E_scat_r + Ebg_r
-    pinn_total_i = pinn_E_scat_i + Ebg_i
+    pinn_input_r, pinn_input_i, rcwa_input_r, rcwa_input_i = arrays
+    if field_representation == "scattered":
+        pinn_scat_r, pinn_scat_i = pinn_input_r, pinn_input_i
+        pinn_total_r, pinn_total_i = pinn_scat_r + Ebg_r, pinn_scat_i + Ebg_i
+    else:
+        pinn_total_r, pinn_total_i = pinn_input_r, pinn_input_i
+        pinn_scat_r, pinn_scat_i = pinn_total_r - Ebg_r, pinn_total_i - Ebg_i
 
-    # RCWA scattered field
-    rcwa_scat_r = rcwa_E_total_r - Ebg_r
-    rcwa_scat_i = rcwa_E_total_i - Ebg_i
+    if reference_field_representation == "total":
+        rcwa_total_r, rcwa_total_i = rcwa_input_r, rcwa_input_i
+        rcwa_scat_r, rcwa_scat_i = rcwa_total_r - Ebg_r, rcwa_total_i - Ebg_i
+    else:
+        rcwa_scat_r, rcwa_scat_i = rcwa_input_r, rcwa_input_i
+        rcwa_total_r, rcwa_total_i = rcwa_scat_r + Ebg_r, rcwa_scat_i + Ebg_i
 
     # Region mask — applied to all metric computations
-    z_for_mask = z_grid if z_grid.ndim == 2 else z_1d.reshape(shape[0], 1) * np.ones(shape)
-    active = _region_mask(z_for_mask, physics, region_mask)
+    active = _region_mask(z_values.reshape(shape), physics, region_mask)
+    assert active.shape == shape, ("mask shape must match field shape", active.shape, shape)
 
     def _metrics(pred_r, pred_i, ref_r, ref_i, label):
         valid = (active
@@ -588,28 +671,28 @@ def compare_fields(
 
     result = {}
     result.update(_metrics(pinn_total_r, pinn_total_i,
-                           rcwa_E_total_r, rcwa_E_total_i, "total"))
-    result.update(_metrics(pinn_E_scat_r, pinn_E_scat_i,
+                           rcwa_total_r, rcwa_total_i, "total"))
+    result.update(_metrics(pinn_scat_r, pinn_scat_i,
                            rcwa_scat_r,   rcwa_scat_i,   "scattered"))
 
     # Field arrays
     result["pinn_E_total_r"] = pinn_total_r
     result["pinn_E_total_i"] = pinn_total_i
-    result["pinn_E_scat_r"]  = pinn_E_scat_r
-    result["pinn_E_scat_i"]  = pinn_E_scat_i
-    result["rcwa_E_total_r"] = rcwa_E_total_r
-    result["rcwa_E_total_i"] = rcwa_E_total_i
+    result["pinn_E_scat_r"]  = pinn_scat_r
+    result["pinn_E_scat_i"]  = pinn_scat_i
+    result["rcwa_E_total_r"] = rcwa_total_r
+    result["rcwa_E_total_i"] = rcwa_total_i
     result["rcwa_E_scat_r"]  = rcwa_scat_r
     result["rcwa_E_scat_i"]  = rcwa_scat_i
 
     # Metadata
-    result["field_representation_pinn"]  = "scattered"
-    result["field_representation_rcwa"]  = "total"
+    result["field_representation_pinn"]  = field_representation
+    result["field_representation_rcwa"]  = reference_field_representation
     result["formulation"]                = formulation
     result["background_added"]           = True
     result["region_mask"]                = region_mask
-    result["pinn_representation"]        = "scattered"
-    result["reference_representation"]   = "total"
+    result["pinn_representation"]        = field_representation
+    result["reference_representation"]   = reference_field_representation
     result["monitor_plane_top_z"]        = float(0.08 * physics.domain_height)
     result["monitor_plane_bot_z"]        = float(0.92 * physics.domain_height)
     result["reference_plane_refl_z"]     = 0.0
@@ -621,6 +704,23 @@ def compare_fields(
     return result
 
 
+def _z_values_for_fields(z_grid: np.ndarray, field_shape: tuple[int, ...]) -> np.ndarray:
+    """Return one z coordinate per field element without implicit broadcasting."""
+    if len(field_shape) == 1:
+        if z_grid.ndim != 1 or z_grid.shape != field_shape:
+            raise ValueError("flat fields require a flat z_grid of identical shape")
+        return z_grid
+
+    nz, nx = field_shape
+    if z_grid.ndim == 2:
+        if z_grid.shape != field_shape:
+            raise ValueError("2-D z_grid must have the same (Nz, Nx) shape as fields")
+        return z_grid.ravel()
+    if z_grid.ndim == 1 and z_grid.shape == (nz,):
+        return np.repeat(z_grid, nx)
+    raise ValueError("2-D fields require z_grid shaped (Nz, Nx) or (Nz,)")
+
+
 # ---------------------------------------------------------------------------
 # compare_modal_with_rcwa
 # ---------------------------------------------------------------------------
@@ -629,6 +729,7 @@ def compare_modal_with_rcwa(
     pinn_modal: dict,
     rcwa_path: "str | None",
     n_harmonics_center: int,
+    physics: "PhysicsConfig | None" = None,
 ) -> dict:
     """Compare PINN modal amplitudes against RCWA.
 
@@ -640,6 +741,10 @@ def compare_modal_with_rcwa(
         Path to the reference NPZ.
     n_harmonics_center
         N such that the m=0 mode is at index N in the RCWA amplitude arrays.
+    physics
+        When supplied, reference amplitudes are de-embedded from their RCWA
+        planes to the extractor monitor planes and converted to the same field
+        representation as ``pinn_modal``.  This is the production path.
 
     Returns
     -------
@@ -665,12 +770,34 @@ def compare_modal_with_rcwa(
     r_pinn = np.array(pinn_modal["r_m_complex"])
     t_pinn = np.array(pinn_modal["t_m_complex"])
 
+    representation = pinn_modal.get("pinn_representation", "total")
+    formulation = pinn_modal.get("formulation", "layered_bg")
+    if representation not in {"total", "scattered"}:
+        raise ValueError("pinn_modal must declare total or scattered representation")
+    if physics is not None and formulation not in {"free_space", "layered_bg"}:
+        raise ValueError("pinn_modal formulation is invalid")
+
+    z_top = float(pinn_modal.get("z_top_monitor", 0.0))
+    z_bot = float(pinn_modal.get("z_bot_monitor", physics.ridge_z_max if physics else 0.0))
+    coeff = _background_coeff(physics) if physics and formulation == "layered_bg" else None
+
     results = {}
     for mi, m in enumerate(orders):
         rcwa_idx = N + m
         if 0 <= rcwa_idx < len(c_refl):
             r_rcwa_m = c_refl[rcwa_idx]
             t_rcwa_m = c_trans[rcwa_idx]
+            if physics is not None:
+                r_rcwa_m *= np.exp(1j * data["kz_air"][rcwa_idx] * z_top)
+                t_rcwa_m *= np.exp(-1j * data["kz_sub"][rcwa_idx]
+                                   * (z_bot - physics.ridge_z_max))
+                if representation == "scattered" and m == 0:
+                    if formulation == "layered_bg":
+                        r_rcwa_m -= coeff["r_eff"] * np.exp(1j * coeff["k1"] * z_top)
+                        t_rcwa_m -= coeff["tau"] * np.exp(
+                            -1j * coeff["k2"] * (z_bot - coeff["z_interface"]))
+                    else:
+                        t_rcwa_m -= np.exp(-1j * physics.k0 * z_bot)
             r_pinn_m = r_pinn[mi]
             t_pinn_m = t_pinn[mi]
             R_rcwa_m = float(R_m_rcwa[rcwa_idx]) if rcwa_idx < len(R_m_rcwa) else 0.0
@@ -706,10 +833,12 @@ def compare_modal_with_rcwa(
         "T_rcwa_total":      T_rcwa_total,
         "rcwa_energy_check": R_rcwa_total + T_rcwa_total,
         # Provenance: carry through whatever representation the extractor used
-        "pinn_representation":    pinn_modal.get("pinn_representation", "unknown"),
-        "formulation":            pinn_modal.get("formulation", "unknown"),
+        "pinn_representation":    representation,
+        "reference_representation": representation if physics is not None else "total_at_reference_planes",
+        "formulation":            formulation,
         "background_subtracted_top": pinn_modal.get(
             "background_subtracted_top", "unknown"),
+        "deembedding_applied": physics is not None,
     }
     return results
 
