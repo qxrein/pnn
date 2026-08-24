@@ -427,6 +427,10 @@ def sample_dd_points(
     # Boundary x points
     x_top = rng.uniform(0.0, physics.period, n_top)
     x_bot = rng.uniform(0.0, physics.period, n_bot)
+    z_vleft = rng.uniform(grat_lo, grat_hi, n_interface)
+    z_vright = rng.uniform(grat_lo, grat_hi, n_interface)
+    corner_points = np.array([[physics.ridge_x_min, physics.ridge_z_min], [physics.ridge_x_max, physics.ridge_z_min],
+                              [physics.ridge_x_min, physics.ridge_z_max], [physics.ridge_x_max, physics.ridge_z_max]])
 
     return {
         "x_air":  _t(x_air),  "z_air":  _t(z_air),
@@ -436,4 +440,7 @@ def sample_dd_points(
         "x_int2": _t(x_i2),
         "x_top":  _t(x_top),
         "x_bot":  _t(x_bot),
+        "z_vleft": _t(z_vleft),
+        "z_vright": _t(z_vright),
+        "corner_points": _t(corner_points),
     }

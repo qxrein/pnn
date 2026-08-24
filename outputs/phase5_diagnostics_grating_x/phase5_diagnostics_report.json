@@ -1,0 +1,77 @@
+{
+  "phase_a_source": {
+    "air": {
+      "residual": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "residual_l2": 0.0
+    },
+    "ridge": {
+      "residual": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.09958725282081465,
+        -0.06767942712913391
+      ],
+      "residual_l2": 0.12040816326530608
+    },
+    "substrate": {
+      "residual": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "residual_l2": 0.0
+    }
+  },
+  "phase_b_counts": {
+    "air": 256,
+    "ridge": 256,
+    "substrate": 256,
+    "horizontal_top": 128,
+    "horizontal_bottom": 128,
+    "vertical_left": 64,
+    "vertical_right": 64,
+    "corner_nw": 64,
+    "corner_ne": 64,
+    "corner_sw": 64,
+    "corner_se": 64
+  },
+  "phase_c_lateral_modes": [
+    {
+      "m": -1,
+      "feature_variant": "local_material_plus_grating_x",
+      "kx": -7.853981633974483,
+      "kz": 4.617179388582709,
+      "complex_l2": 1.9851740865081866,
+      "phase_rmse_deg": 105.87498537443415,
+      "modal_amplitude": 0.7697686617506002,
+      "modal_phase_deg": -19.504972250587993,
+      "final_loss": 0.011566072716380422
+    },
+    {
+      "m": 1,
+      "feature_variant": "local_material_plus_grating_x",
+      "kx": 7.853981633974483,
+      "kz": 4.617179388582709,
+      "complex_l2": 2.0327792410634067,
+      "phase_rmse_deg": 107.05244340391343,
+      "modal_amplitude": 0.1882485848624933,
+      "modal_phase_deg": 171.78281838445588,
+      "final_loss": 0.009470279171766332
+    }
+  ],
+  "phase_d_contrast_sweep": [],
+  "valid": false,
+  "invalid_reason": "Diagnostic run only; Phase 5 is not physically validated."
+}

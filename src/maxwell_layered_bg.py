@@ -280,6 +280,7 @@ def maxwell_2d_lbg_pde_residual(
     physics: "PhysicsConfig",
     eps_val: float,
     coeff: dict,
+    source_alpha: float = 1.0,
 ) -> tuple[torch.Tensor, ...]:
     """Layered-background scattered-field PDE residuals (nondim xbar, zbar).
 
@@ -317,8 +318,8 @@ def maxwell_2d_lbg_pde_residual(
         dEi_dz  +  Hr_x,
         dEr_dx  +  Hi_z,
         dEi_dx  -  Hr_z,
-        dHrx_dz - dHrz_dx - eps_val * Ei_s - delta * Ebg_i,
-        dHix_dz - dHiz_dx + eps_val * Er_s + delta * Ebg_r,
+        dHrx_dz - dHrz_dx - eps_val * Ei_s - source_alpha * delta * Ebg_i,
+        dHix_dz - dHiz_dx + eps_val * Er_s + source_alpha * delta * Ebg_r,
     ]
 
     return tuple(res)
@@ -371,6 +372,17 @@ def lbg_bottom_bc(subnet, x_pts: torch.Tensor, physics: "PhysicsConfig",
     Er_s, Ei_s, Hr_x, Hi_x, _, _ = subnet.field_components(x_pts, z)
     n_sub = physics.n_substrate
     return torch.mean((Hr_x - n_sub * Er_s)**2 + (Hi_x - n_sub * Ei_s)**2)
+
+
+def lbg_vertical_interface_loss(subnet, x_interface: float, z_pts: torch.Tensor,
+                                offset: float = 1e-5) -> tuple[torch.Tensor, torch.Tensor]:
+    """One-sided tangential E_y and H_z continuity at a vertical ridge edge."""
+    xl = torch.full_like(z_pts, x_interface - offset)
+    xr = torch.full_like(z_pts, x_interface + offset)
+    Elr, Eli, _, _, Hzlr, Hzli = subnet.field_components(xl, z_pts)
+    Err, Eri, _, _, Hzrr, Hzri = subnet.field_components(xr, z_pts)
+    return (torch.mean((Elr-Err)**2 + (Eli-Eri)**2),
+            torch.mean((Hzlr-Hzrr)**2 + (Hzli-Hzri)**2))
 
 
 # ---------------------------------------------------------------------------

@@ -295,10 +295,12 @@ def boundary_spectral_audit(
     x_t = torch.as_tensor(x_uni, dtype=torch.float64)
     z_t = torch.as_tensor(z_uni, dtype=torch.float64)
 
-    with torch.no_grad():
+    # Some representations reconstruct H from autograd derivatives of E.
+    # Keep this local graph during an audit, then detach below for NumPy.
+    with torch.enable_grad():
         Er_s, Ei_s, Hr_x, Hi_x, _, _ = subnet.field_components(x_t, z_t)
-    E_scat = Er_s.numpy() + 1j * Ei_s.numpy()
-    H_scat = Hr_x.numpy() + 1j * Hi_x.numpy()
+    E_scat = Er_s.detach().numpy() + 1j * Ei_s.detach().numpy()
+    H_scat = Hr_x.detach().numpy() + 1j * Hi_x.detach().numpy()
 
     orders = np.arange(-n_dtn_orders, n_dtn_orders + 1)
     G0     = 2.0 * np.pi / period

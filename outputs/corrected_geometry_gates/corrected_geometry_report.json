@@ -1,0 +1,14 @@
+{
+  "ridge_area": 0.06400000000000002,
+  "grid_pde_points_inside_ridge": 2678,
+  "grid_pde_points_total": 65536,
+  "zero_field_residual_magnitude": {
+    "air": 0.0,
+    "ridge": 0.12040816326530608,
+    "substrate": 0.0
+  },
+  "source_pm1_max": 0.03646598233297107,
+  "binary_mask_fft_vs_analytic_max_error": 0.0023475205581010438,
+  "zero_contrast_exact_modal_field": "covered by test_zero_contrast_explicit_modal_field_stays_zero",
+  "weak_ridge_continuity": "covered by test_shallow_ridge_rcwa_orders_grow_continuously_from_zero_contrast"
+}

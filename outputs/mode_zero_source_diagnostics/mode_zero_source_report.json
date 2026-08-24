@@ -1,0 +1,354 @@
+{
+  "zero_source_hard_test": {
+    "loss_before": {
+      "pde": 0.0,
+      "pde_air": 0.0,
+      "pde_grat": 0.0,
+      "pde_sub": 0.0,
+      "E_int1": 0.0,
+      "H_int1": 0.0,
+      "E_int2": 0.0,
+      "H_int2": 0.0,
+      "top": 0.0,
+      "bottom": 0.0,
+      "modal": 0.0,
+      "total": 0.0
+    },
+    "loss_after": {
+      "pde": 0.0,
+      "pde_air": 0.0,
+      "pde_grat": 0.0,
+      "pde_sub": 0.0,
+      "E_int1": 0.0,
+      "H_int1": 0.0,
+      "E_int2": 0.0,
+      "H_int2": 0.0,
+      "top": 0.0,
+      "bottom": 0.0,
+      "modal": 0.0,
+      "total": 0.0
+    },
+    "top_boundary": 0.0,
+    "bottom_boundary": 0.0,
+    "dtn": 0.0,
+    "interface_E": 0.0,
+    "interface_H": 0.0,
+    "modal_max": 0.0
+  },
+  "manufactured_modes": [
+    {
+      "medium": "air",
+      "refractive_index": 1.0,
+      "wavelength": 1.0,
+      "Lambda": 0.8,
+      "order_m": 0,
+      "kx": 0.0,
+      "kz_real": 6.283185307179586,
+      "kz_imag": 0.0,
+      "status": "propagating",
+      "propagation_direction": "outgoing downward (+z)",
+      "time_convention": "exp(+i omega t)",
+      "field_convention": "E=exp(i*kx*x-i*kz*z); Hx=(kz/k0)E; Hz=(kx/k0)E",
+      "fits": [
+        {
+          "variant": "global_k0",
+          "supervised_E_complex_l2": 0.02852719684344878,
+          "supervised_H_complex_l2": 0.028326305957324553,
+          "phase_rmse_deg": 1.201840769036779,
+          "modal_amplitude_error": 0.0037622984720010466,
+          "modal_phase_error_deg": 0.10960547254383356,
+          "final_loss": 0.0002215180845224176
+        },
+        {
+          "variant": "local_material_plus_grating_x",
+          "supervised_E_complex_l2": 0.028098998792193696,
+          "supervised_H_complex_l2": 0.028771301827739522,
+          "phase_rmse_deg": 1.161830977057427,
+          "modal_amplitude_error": 0.001686972846056567,
+          "modal_phase_error_deg": 0.06373786316521718,
+          "final_loss": 0.0002342096155245568
+        },
+        {
+          "variant": "siren_sine",
+          "supervised_E_complex_l2": 0.04243727999409651,
+          "supervised_H_complex_l2": 0.04425861368266695,
+          "phase_rmse_deg": 1.502660211597371,
+          "modal_amplitude_error": 0.07990333655693793,
+          "modal_phase_error_deg": 5.069359676579087,
+          "final_loss": 0.0007701161810802938
+        },
+        {
+          "variant": "explicit_fourier_modal",
+          "supervised_E_complex_l2": 0.0,
+          "supervised_H_complex_l2": 0.0,
+          "phase_rmse_deg": 0.0,
+          "modal_amplitude_error": 0.0,
+          "modal_phase_error_deg": 0.0,
+          "final_loss": 0.0
+        }
+      ]
+    },
+    {
+      "medium": "substrate",
+      "refractive_index": 1.45,
+      "wavelength": 1.0,
+      "Lambda": 0.8,
+      "order_m": 0,
+      "kx": 0.0,
+      "kz_real": 9.1106186954104,
+      "kz_imag": 0.0,
+      "status": "propagating",
+      "propagation_direction": "outgoing downward (+z)",
+      "time_convention": "exp(+i omega t)",
+      "field_convention": "E=exp(i*kx*x-i*kz*z); Hx=(kz/k0)E; Hz=(kx/k0)E",
+      "fits": [
+        {
+          "variant": "global_k0",
+          "supervised_E_complex_l2": 1.5902544052250498,
+          "supervised_H_complex_l2": 1.5816992159804237,
+          "phase_rmse_deg": 109.24417479233341,
+          "modal_amplitude_error": 0.7267160975250053,
+          "modal_phase_error_deg": 161.54659402256053,
+          "final_loss": 0.06666004275788574
+        },
+        {
+          "variant": "local_material_plus_grating_x",
+          "supervised_E_complex_l2": 0.029771443186611547,
+          "supervised_H_complex_l2": 0.025624347372792296,
+          "phase_rmse_deg": 1.2570428784802063,
+          "modal_amplitude_error": 0.012330589849403717,
+          "modal_phase_error_deg": 0.06172345604178682,
+          "final_loss": 0.0003065913809401909
+        },
+        {
+          "variant": "siren_sine",
+          "supervised_E_complex_l2": 0.08132060242191687,
+          "supervised_H_complex_l2": 0.082436691891948,
+          "phase_rmse_deg": 3.0824730737848984,
+          "modal_amplitude_error": 0.10979784091042255,
+          "modal_phase_error_deg": 7.144847686565583,
+          "final_loss": 0.0029055951924732096
+        },
+        {
+          "variant": "explicit_fourier_modal",
+          "supervised_E_complex_l2": 0.0,
+          "supervised_H_complex_l2": 0.0,
+          "phase_rmse_deg": 0.0,
+          "modal_amplitude_error": 0.0,
+          "modal_phase_error_deg": 0.0,
+          "final_loss": 0.0
+        }
+      ]
+    },
+    {
+      "medium": "air",
+      "refractive_index": 1.0,
+      "wavelength": 1.0,
+      "Lambda": 0.8,
+      "order_m": 1,
+      "kx": 7.853981633974483,
+      "kz_real": -0.0,
+      "kz_imag": -4.71238898038469,
+      "status": "evanescent",
+      "propagation_direction": "outgoing downward (+z)",
+      "time_convention": "exp(+i omega t)",
+      "field_convention": "E=exp(i*kx*x-i*kz*z); Hx=(kz/k0)E; Hz=(kx/k0)E",
+      "fits": [
+        {
+          "variant": "global_k0",
+          "supervised_E_complex_l2": 0.871263084609607,
+          "supervised_H_complex_l2": 0.8684354971316771,
+          "phase_rmse_deg": 65.84066444372469,
+          "modal_amplitude_error": 0.8111229043348821,
+          "modal_phase_error_deg": 2.585260538627965,
+          "final_loss": 0.008509133943922798
+        },
+        {
+          "variant": "local_material_plus_grating_x",
+          "supervised_E_complex_l2": 0.8873668796008193,
+          "supervised_H_complex_l2": 0.8942899486082211,
+          "phase_rmse_deg": 68.97293168031422,
+          "modal_amplitude_error": 0.838035816009043,
+          "modal_phase_error_deg": 0.29998242023729593,
+          "final_loss": 0.007440138156930516
+        },
+        {
+          "variant": "siren_sine",
+          "supervised_E_complex_l2": 0.3169477395165702,
+          "supervised_H_complex_l2": 0.3163613622102591,
+          "phase_rmse_deg": 73.50669065042888,
+          "modal_amplitude_error": 0.28772748110824387,
+          "modal_phase_error_deg": 0.11169776899472449,
+          "final_loss": 0.0023013472785776926
+        },
+        {
+          "variant": "explicit_fourier_modal",
+          "supervised_E_complex_l2": 0.0,
+          "supervised_H_complex_l2": 0.0,
+          "phase_rmse_deg": 0.0,
+          "modal_amplitude_error": 0.0,
+          "modal_phase_error_deg": 0.0,
+          "final_loss": 0.0
+        }
+      ]
+    },
+    {
+      "medium": "air",
+      "refractive_index": 1.0,
+      "wavelength": 1.0,
+      "Lambda": 0.8,
+      "order_m": -1,
+      "kx": -7.853981633974483,
+      "kz_real": -0.0,
+      "kz_imag": -4.71238898038469,
+      "status": "evanescent",
+      "propagation_direction": "outgoing downward (+z)",
+      "time_convention": "exp(+i omega t)",
+      "field_convention": "E=exp(i*kx*x-i*kz*z); Hx=(kz/k0)E; Hz=(kx/k0)E",
+      "fits": [
+        {
+          "variant": "global_k0",
+          "supervised_E_complex_l2": 0.8601283180817233,
+          "supervised_H_complex_l2": 0.8744895357109497,
+          "phase_rmse_deg": 65.98485217001105,
+          "modal_amplitude_error": 0.8202615625883458,
+          "modal_phase_error_deg": 3.920809991431164,
+          "final_loss": 0.0087731423971735
+        },
+        {
+          "variant": "local_material_plus_grating_x",
+          "supervised_E_complex_l2": 0.8708335913442584,
+          "supervised_H_complex_l2": 0.88487080917656,
+          "phase_rmse_deg": 68.98566249536185,
+          "modal_amplitude_error": 0.821525617972658,
+          "modal_phase_error_deg": 2.468032480620917,
+          "final_loss": 0.00805361978375353
+        },
+        {
+          "variant": "siren_sine",
+          "supervised_E_complex_l2": 0.5182057567496849,
+          "supervised_H_complex_l2": 0.5172670060967778,
+          "phase_rmse_deg": 92.29402970083433,
+          "modal_amplitude_error": 0.4281751530705764,
+          "modal_phase_error_deg": 3.1076323710386142,
+          "final_loss": 0.006064885601249137
+        },
+        {
+          "variant": "explicit_fourier_modal",
+          "supervised_E_complex_l2": 0.0,
+          "supervised_H_complex_l2": 0.0,
+          "phase_rmse_deg": 0.0,
+          "modal_amplitude_error": 0.0,
+          "modal_phase_error_deg": 0.0,
+          "final_loss": 0.0
+        }
+      ]
+    },
+    {
+      "medium": "substrate",
+      "refractive_index": 1.45,
+      "wavelength": 1.0,
+      "Lambda": 0.8,
+      "order_m": 1,
+      "kx": 7.853981633974483,
+      "kz_real": 4.617179388582709,
+      "kz_imag": 0.0,
+      "status": "propagating",
+      "propagation_direction": "outgoing downward (+z)",
+      "time_convention": "exp(+i omega t)",
+      "field_convention": "E=exp(i*kx*x-i*kz*z); Hx=(kz/k0)E; Hz=(kx/k0)E",
+      "fits": [
+        {
+          "variant": "global_k0",
+          "supervised_E_complex_l2": 1.1702578336823715,
+          "supervised_H_complex_l2": 1.1795529167704146,
+          "phase_rmse_deg": 71.82374621824772,
+          "modal_amplitude_error": 0.492880114969667,
+          "modal_phase_error_deg": 112.62367103560823,
+          "final_loss": 0.05270365727381985
+        },
+        {
+          "variant": "local_material_plus_grating_x",
+          "supervised_E_complex_l2": 1.636583979325049,
+          "supervised_H_complex_l2": 1.6462097226516923,
+          "phase_rmse_deg": 106.59989882870808,
+          "modal_amplitude_error": 0.8794655679565313,
+          "modal_phase_error_deg": 38.576177452638866,
+          "final_loss": 0.05367396016135762
+        },
+        {
+          "variant": "siren_sine",
+          "supervised_E_complex_l2": 0.04831196029840849,
+          "supervised_H_complex_l2": 0.05153927830192035,
+          "phase_rmse_deg": 2.002594954929695,
+          "modal_amplitude_error": 0.0009832188115379559,
+          "modal_phase_error_deg": 1.2443743917352375,
+          "final_loss": 0.0009986395054036817
+        },
+        {
+          "variant": "explicit_fourier_modal",
+          "supervised_E_complex_l2": 0.0,
+          "supervised_H_complex_l2": 0.0,
+          "phase_rmse_deg": 0.0,
+          "modal_amplitude_error": 0.0,
+          "modal_phase_error_deg": 0.0,
+          "final_loss": 0.0
+        }
+      ]
+    },
+    {
+      "medium": "substrate",
+      "refractive_index": 1.45,
+      "wavelength": 1.0,
+      "Lambda": 0.8,
+      "order_m": -1,
+      "kx": -7.853981633974483,
+      "kz_real": 4.617179388582709,
+      "kz_imag": 0.0,
+      "status": "propagating",
+      "propagation_direction": "outgoing downward (+z)",
+      "time_convention": "exp(+i omega t)",
+      "field_convention": "E=exp(i*kx*x-i*kz*z); Hx=(kz/k0)E; Hz=(kx/k0)E",
+      "fits": [
+        {
+          "variant": "global_k0",
+          "supervised_E_complex_l2": 1.1600847449088663,
+          "supervised_H_complex_l2": 1.1684501746165938,
+          "phase_rmse_deg": 70.05788185642263,
+          "modal_amplitude_error": 0.40829901993680084,
+          "modal_phase_error_deg": 87.26253715607955,
+          "final_loss": 0.05462646808587216
+        },
+        {
+          "variant": "local_material_plus_grating_x",
+          "supervised_E_complex_l2": 1.6326344485289195,
+          "supervised_H_complex_l2": 1.6439161573700323,
+          "phase_rmse_deg": 106.30820232607576,
+          "modal_amplitude_error": 0.8631196414974411,
+          "modal_phase_error_deg": 0.15759350852576842,
+          "final_loss": 0.05921776837152722
+        },
+        {
+          "variant": "siren_sine",
+          "supervised_E_complex_l2": 0.05219899357794497,
+          "supervised_H_complex_l2": 0.05485757126196886,
+          "phase_rmse_deg": 1.9135502994950808,
+          "modal_amplitude_error": 0.0021966165779843116,
+          "modal_phase_error_deg": 0.5489777185586274,
+          "final_loss": 0.0010331523782559605
+        },
+        {
+          "variant": "explicit_fourier_modal",
+          "supervised_E_complex_l2": 0.0,
+          "supervised_H_complex_l2": 0.0,
+          "phase_rmse_deg": 0.0,
+          "modal_amplitude_error": 0.0,
+          "modal_phase_error_deg": 0.0,
+          "final_loss": 0.0
+        }
+      ]
+    }
+  ],
+  "valid": false,
+  "invalid_reason": "Representation diagnostic; no modal-loss or contrast sweep authorised until all gates pass."
+}

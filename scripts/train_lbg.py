@@ -55,6 +55,8 @@ from src.maxwell_2d_nondim import (
     sample_nd_points,
 )
 from src.maxwell_feature_variants import Maxwell2DDD_Variant
+from src.mode_aware_fourier import ExplicitFourierModalDD
+from src.reference_validation import validate_reference
 from src.maxwell_layered_bg import (
     background_field_np,
     background_field_torch,
@@ -63,6 +65,7 @@ from src.maxwell_layered_bg import (
     delta_eps_tensor,
     lbg_bottom_bc,
     lbg_top_bc,
+    lbg_vertical_interface_loss,
     maxwell_2d_lbg_pde_residual,
     reconstruct_total_field,
 )
@@ -140,7 +143,7 @@ def free_space_loss(model, pts, physics, w_pde, w_E, w_H, w_top, w_bot):
 def layered_bg_loss(model, pts, physics, coeff, w_pde, w_E, w_H, w_top, w_bot,
                     use_dtn: bool = False, n_dtn_orders: int = 8,
                     rcwa_amps: dict | None = None, w_modal: float = 0.0,
-                    n_modal_orders: int = 3):
+                    n_modal_orders: int = 3, source_alpha: float = 1.0):
     """Layered-background scattered-field loss.
 
     use_dtn=True    → replace Robin BCs with modal DtN.
@@ -154,7 +157,13 @@ def layered_bg_loss(model, pts, physics, coeff, w_pde, w_E, w_H, w_top, w_bot,
     def _pde(k, net, eps):
         xk = pts.get(f"x_{k}"); zk = pts.get(f"z_{k}")
         if xk is None or not len(xk): return zero
-        res = maxwell_2d_lbg_pde_residual(net, xk, zk, physics, eps, coeff)
+        # The grating *band* is not a uniform ridge slab.  The physical
+        # material product must retain its x dependence: substrate exists
+        # outside the finite ridge footprint at these z values.
+        if k == "grat":
+            from src.geometry import epsilon_r
+            eps = epsilon_r(xk, zk, physics)
+        res = maxwell_2d_lbg_pde_residual(net, xk, zk, physics, eps, coeff, source_alpha=source_alpha)
         return sum(torch.mean(r**2) for r in res) / len(res)
 
     La = _pde("air",  model.net_air,  p.n_air**2)
@@ -173,6 +182,9 @@ def layered_bg_loss(model, pts, physics, coeff, w_pde, w_E, w_H, w_top, w_bot,
                     use_dtn=use_dtn, n_dtn_orders=n_dtn_orders)
     Lb = lbg_bottom_bc(model.net_sub, pts["x_bot"], physics, coeff,
                        use_dtn=use_dtn, n_dtn_orders=n_dtn_orders)
+    LEv_l, LHv_l = lbg_vertical_interface_loss(model.net_grat, p.ridge_x_min, pts["z_vleft"])
+    LEv_r, LHv_r = lbg_vertical_interface_loss(model.net_grat, p.ridge_x_max, pts["z_vright"])
+    LEv, LHv = LEv_l + LEv_r, LHv_l + LHv_r
 
     # Modal data loss (optional)
     L_modal = zero
@@ -199,9 +211,9 @@ def layered_bg_loss(model, pts, physics, coeff, w_pde, w_E, w_H, w_top, w_bot,
         )
         L_modal = L_modal_bot + L_modal_top
 
-    total = w_pde*Lp + w_E*(LE1+LE2) + w_H*(LH1+LH2) + w_top*Lt + w_bot*Lb + w_modal*L_modal
+    total = w_pde*Lp + w_E*(LE1+LE2+LEv) + w_H*(LH1+LH2+LHv) + w_top*Lt + w_bot*Lb + w_modal*L_modal
     return {"pde":Lp,"pde_air":La,"pde_grat":Lg,"pde_sub":Ls,
-            "E_int1":LE1,"H_int1":LH1,"E_int2":LE2,"H_int2":LH2,
+            "E_int1":LE1,"H_int1":LH1,"E_int2":LE2,"H_int2":LH2,"E_vertical":LEv,"H_vertical":LHv,
             "top":Lt,"bottom":Lb,"modal":L_modal,"total":total}
 
 
@@ -269,7 +281,9 @@ def evaluate(model, physics, device, dtype, formulation, coeff=None):
     xf = xg.reshape(-1); zf = zg.reshape(-1)
 
     model.eval()
-    with torch.no_grad():
+    # Explicit Fourier coefficient networks reconstruct H from autograd z
+    # derivatives of E, so evaluation must retain a local derivative graph.
+    with torch.enable_grad():
         Er_s = torch.zeros(xf.shape[0], dtype=dtype, device=device)
         Ei_s = torch.zeros_like(Er_s)
         p = physics
@@ -442,6 +456,11 @@ def main() -> int:
                         choices=["normalized", "global_k0", "local_material_k",
                                  "local_material_plus_grating_x"],
                         help="Feature encoding variant for x/z coordinates (default global_k0)")
+    parser.add_argument("--architecture", default="feature_mlp",
+                        choices=["feature_mlp", "explicit_fourier_modal"],
+                        help="Field representation; explicit Fourier mode predicts complex a_m(z).")
+    parser.add_argument("--modal-order-max", type=int, default=3,
+                        help="Explicit modal truncation M, retaining orders -M,...,+M.")
     parser.add_argument("--lbg-only", action="store_true",
                         help="Skip free-space baseline, run only layered-background variant")
     parser.add_argument("--output-dir", default="outputs/lbg")
@@ -478,6 +497,12 @@ def main() -> int:
     elif args.reference:
         ref_path = Path(args.reference)
         if not ref_path.is_absolute(): ref_path = ROOT / ref_path
+
+    reference_metadata = None
+    if ref_path is not None:
+        reference_metadata = validate_reference(ref_path, physics)
+        print(f"  Validated reference: {reference_metadata['path']}  "
+              f"R+T={reference_metadata['energy_balance']:.12f}")
 
     # Background coefficients
     coeff = compute_background_coefficients(physics)
@@ -551,7 +576,12 @@ def main() -> int:
     # Model factory: use ND+grating when grating_levels>0, else Variant
     def _make_model(seed_offset=0):
         set_seed(args.seed + seed_offset)
-        if args.grating_levels > 0:
+        if args.architecture == "explicit_fourier_modal":
+            m = ExplicitFourierModalDD(physics, modal_order_max=args.modal_order_max,
+                                       use_coefficient_mlp=True)
+            n_par = sum(p2.numel() for p2 in m.parameters())
+            print(f"  Model: ExplicitFourierModalDD M={args.modal_order_max} params={n_par:,}")
+        elif args.grating_levels > 0:
             from src.maxwell_2d_nondim import Maxwell2DDD_ND
             m = Maxwell2DDD_ND(
                 physics,
@@ -588,7 +618,8 @@ def main() -> int:
 
     # ---- Layered-background variant (with or without DtN) ----
     bc_label = "DtN" if args.use_dtn else "Robin"
-    feat_label = f"grating_levels={args.grating_levels}" if args.grating_levels > 0 else args.feature_variant
+    feat_label = (f"explicit_modal_M={args.modal_order_max}" if args.architecture == "explicit_fourier_modal"
+                  else f"grating_levels={args.grating_levels}" if args.grating_levels > 0 else args.feature_variant)
     print(f"\n  === Layered-background ({bc_label} BC, {feat_label}) ===")
     if args.use_dtn:
         G0 = 2 * np.pi / physics.period

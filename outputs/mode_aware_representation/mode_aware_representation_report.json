@@ -1,0 +1,218 @@
+{
+  "training_data": "analytical manufactured modes only; no RCWA pointwise anchor",
+  "modal_data_loss_weight": 0,
+  "cases": [
+    {
+      "medium": "air",
+      "n": 1.0,
+      "order": 0,
+      "global_k0_mlp": {
+        "complex_E_error": 0.027975556237201413,
+        "complex_H_error": 0.029122092724338217,
+        "phase_error_deg": 1.163341912825375,
+        "modal_amplitude_error": 0.0068803883039157965,
+        "kx": 0.0,
+        "kz_real": 6.283185307179586,
+        "kz_imag": 0.0,
+        "status": "propagating"
+      },
+      "mode_aware_feature_mlp": {
+        "complex_E_error": 0.011412185537174305,
+        "complex_H_error": 0.011383092374061281,
+        "phase_error_deg": 0.21424078789403994,
+        "modal_amplitude_error": 0.04185902208691039,
+        "kx": 0.0,
+        "kz_real": 6.283185307179586,
+        "kz_imag": 0.0,
+        "status": "propagating"
+      },
+      "explicit_fourier_modal": {
+        "complex_E_error": 0.0,
+        "complex_H_error": 0.0,
+        "phase_error_deg": 4.0231224969180086e-11,
+        "modal_amplitude_error": 0.0,
+        "kx": 0.0,
+        "kz_real": 6.283185307179586,
+        "kz_imag": 0.0,
+        "status": "propagating"
+      }
+    },
+    {
+      "medium": "substrate",
+      "n": 1.45,
+      "order": 0,
+      "global_k0_mlp": {
+        "complex_E_error": 1.6617071281273266,
+        "complex_H_error": 1.6481625484438411,
+        "phase_error_deg": 108.35660734899962,
+        "modal_amplitude_error": 0.9530926882047882,
+        "kx": 0.0,
+        "kz_real": 9.1106186954104,
+        "kz_imag": 0.0,
+        "status": "propagating"
+      },
+      "mode_aware_feature_mlp": {
+        "complex_E_error": 0.008237219075705824,
+        "complex_H_error": 0.005488135070732323,
+        "phase_error_deg": 0.3683371859725885,
+        "modal_amplitude_error": 0.0003786591079376622,
+        "kx": 0.0,
+        "kz_real": 9.1106186954104,
+        "kz_imag": 0.0,
+        "status": "propagating"
+      },
+      "explicit_fourier_modal": {
+        "complex_E_error": 0.0,
+        "complex_H_error": 0.0,
+        "phase_error_deg": 4.0838006272415505e-11,
+        "modal_amplitude_error": 0.0,
+        "kx": 0.0,
+        "kz_real": 9.1106186954104,
+        "kz_imag": 0.0,
+        "status": "propagating"
+      }
+    },
+    {
+      "medium": "air",
+      "n": 1.0,
+      "order": 1,
+      "global_k0_mlp": {
+        "complex_E_error": 0.8509902955310725,
+        "complex_H_error": 0.857132266443342,
+        "phase_error_deg": 65.1025817043604,
+        "modal_amplitude_error": 0.8118713253969897,
+        "kx": 7.853981633974483,
+        "kz_real": -0.0,
+        "kz_imag": -4.71238898038469,
+        "status": "evanescent"
+      },
+      "mode_aware_feature_mlp": {
+        "complex_E_error": 0.02807223263450369,
+        "complex_H_error": 0.0363277764051018,
+        "phase_error_deg": 42.68734944396522,
+        "modal_amplitude_error": 0.04129283487244573,
+        "kx": 7.853981633974483,
+        "kz_real": -0.0,
+        "kz_imag": -4.71238898038469,
+        "status": "evanescent"
+      },
+      "explicit_fourier_modal": {
+        "complex_E_error": 0.0,
+        "complex_H_error": 0.0,
+        "phase_error_deg": 1.2188850610685775e-07,
+        "modal_amplitude_error": 0.0,
+        "kx": 7.853981633974483,
+        "kz_real": -0.0,
+        "kz_imag": -4.71238898038469,
+        "status": "evanescent"
+      }
+    },
+    {
+      "medium": "air",
+      "n": 1.0,
+      "order": -1,
+      "global_k0_mlp": {
+        "complex_E_error": 0.849728666953206,
+        "complex_H_error": 0.8510331668045631,
+        "phase_error_deg": 67.2411986093951,
+        "modal_amplitude_error": 0.8069322263050439,
+        "kx": -7.853981633974483,
+        "kz_real": -0.0,
+        "kz_imag": -4.71238898038469,
+        "status": "evanescent"
+      },
+      "mode_aware_feature_mlp": {
+        "complex_E_error": 0.03111931746042802,
+        "complex_H_error": 0.038375666395852756,
+        "phase_error_deg": 58.663739006083055,
+        "modal_amplitude_error": 0.04694740588142998,
+        "kx": -7.853981633974483,
+        "kz_real": -0.0,
+        "kz_imag": -4.71238898038469,
+        "status": "evanescent"
+      },
+      "explicit_fourier_modal": {
+        "complex_E_error": 0.0,
+        "complex_H_error": 0.0,
+        "phase_error_deg": 1.2188850610685775e-07,
+        "modal_amplitude_error": 0.0,
+        "kx": -7.853981633974483,
+        "kz_real": -0.0,
+        "kz_imag": -4.71238898038469,
+        "status": "evanescent"
+      }
+    },
+    {
+      "medium": "substrate",
+      "n": 1.45,
+      "order": 1,
+      "global_k0_mlp": {
+        "complex_E_error": 1.148796187489537,
+        "complex_H_error": 1.1516315772343522,
+        "phase_error_deg": 72.36887754439573,
+        "modal_amplitude_error": 0.5717565738934505,
+        "kx": 7.853981633974483,
+        "kz_real": 4.617179388582709,
+        "kz_imag": 0.0,
+        "status": "propagating"
+      },
+      "mode_aware_feature_mlp": {
+        "complex_E_error": 0.008902930019607671,
+        "complex_H_error": 0.013324590689712701,
+        "phase_error_deg": 0.3914913590160673,
+        "modal_amplitude_error": 0.0026434016795683357,
+        "kx": 7.853981633974483,
+        "kz_real": 4.617179388582709,
+        "kz_imag": 0.0,
+        "status": "propagating"
+      },
+      "explicit_fourier_modal": {
+        "complex_E_error": 0.0,
+        "complex_H_error": 0.0,
+        "phase_error_deg": 4.051500434524233e-11,
+        "modal_amplitude_error": 0.0,
+        "kx": 7.853981633974483,
+        "kz_real": 4.617179388582709,
+        "kz_imag": 0.0,
+        "status": "propagating"
+      }
+    },
+    {
+      "medium": "substrate",
+      "n": 1.45,
+      "order": -1,
+      "global_k0_mlp": {
+        "complex_E_error": 1.1524127495319438,
+        "complex_H_error": 1.152765177740604,
+        "phase_error_deg": 70.53240104521034,
+        "modal_amplitude_error": 0.612203307908635,
+        "kx": -7.853981633974483,
+        "kz_real": 4.617179388582709,
+        "kz_imag": 0.0,
+        "status": "propagating"
+      },
+      "mode_aware_feature_mlp": {
+        "complex_E_error": 0.008047443608306556,
+        "complex_H_error": 0.010351081494063274,
+        "phase_error_deg": 0.34697584334227266,
+        "modal_amplitude_error": 0.001599111513824747,
+        "kx": -7.853981633974483,
+        "kz_real": 4.617179388582709,
+        "kz_imag": 0.0,
+        "status": "propagating"
+      },
+      "explicit_fourier_modal": {
+        "complex_E_error": 0.0,
+        "complex_H_error": 0.0,
+        "phase_error_deg": 4.0515026875446405e-11,
+        "modal_amplitude_error": 0.0,
+        "kx": -7.853981633974483,
+        "kz_real": 4.617179388582709,
+        "kz_imag": 0.0,
+        "status": "propagating"
+      }
+    }
+  ],
+  "valid": true,
+  "invalid_reason": null
+}

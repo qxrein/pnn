@@ -180,6 +180,77 @@ def test_delta_eps_nonzero_ridge(physics):
     assert abs(d[0] - expected) < 1e-10
 
 
+def test_zero_scattered_field_has_contrast_source_only_in_ridge(physics, coeff, dtype):
+    """A zero scattered field leaves exactly the signed contrast source in ridge PDEs."""
+    class ZeroScattered(torch.nn.Module):
+        def field_components(self, x, z):
+            zero = x * 0.0 + z * 0.0
+            return zero, zero, zero, zero, zero, zero
+
+    net = ZeroScattered()
+    x_ridge = torch.tensor([(physics.ridge_x_min + physics.ridge_x_max) / 2], dtype=dtype)
+    z_ridge = torch.tensor([(physics.ridge_z_min + physics.ridge_z_max) / 2], dtype=dtype)
+    x_air = torch.tensor([0.1], dtype=dtype); z_air = torch.tensor([0.5], dtype=dtype)
+    x_sub = torch.tensor([0.1], dtype=dtype); z_sub = torch.tensor([1.8], dtype=dtype)
+    ridge = maxwell_2d_lbg_pde_residual(net, x_ridge, z_ridge, physics, physics.eps_ridge, coeff)
+    air = maxwell_2d_lbg_pde_residual(net, x_air, z_air, physics, physics.eps_air, coeff)
+    sub = maxwell_2d_lbg_pde_residual(net, x_sub, z_sub, physics, physics.eps_substrate, coeff)
+    assert all(torch.allclose(r, torch.zeros_like(r), atol=1e-12) for r in air + sub)
+    delta = physics.eps_ridge - physics.eps_substrate
+    ebr, ebi, _, _ = background_field_torch(z_ridge, coeff, physics)
+    assert torch.allclose(ridge[4], -delta * ebi, atol=1e-12)
+    assert torch.allclose(ridge[5], +delta * ebr, atol=1e-12)
+    assert float((torch.abs(ridge[4]) + torch.abs(ridge[5])).detach()) > 1e-8
+
+
+def test_zero_contrast_exact_zero_field_has_zero_modal_amplitudes(physics, dtype):
+    """The exact zero scattered solution cannot create spurious diffraction modes."""
+    from src.field_comparison import extract_scattered_modal_amplitudes
+    p = PhysicsConfig(
+        wavelength=physics.wavelength, n_air=physics.n_air,
+        n_ridge=physics.n_substrate, n_substrate=physics.n_substrate,
+        period=0.8 * physics.wavelength, ridge_width=0.32,
+        ridge_height=physics.ridge_height, domain_height=physics.domain_height,
+        ridge_base_fraction=physics.ridge_base_fraction,
+    )
+    x = np.linspace(0.0, p.period, 128, endpoint=False)
+    z = np.linspace(0.0, p.domain_height, 64)
+    zero = np.zeros((len(z), len(x)), dtype=complex)
+    modal = extract_scattered_modal_amplitudes(zero, x, z, p, formulation="layered_bg", n_orders=1)
+    assert np.max(np.abs(modal["r_m_complex"])) < 1e-14
+    assert np.max(np.abs(modal["t_m_complex"])) < 1e-14
+
+
+def test_true_geometry_has_no_uniform_ridge_band(physics, dtype):
+    """The horizontal ridge band is substrate outside the finite ridge."""
+    from src.geometry import epsilon_r
+    z_band = torch.tensor([(physics.ridge_z_min + physics.ridge_z_max) / 2], dtype=dtype)
+    points = {
+        "inside_ridge": (0.5 * physics.period, z_band),
+        "left_of_ridge": (physics.ridge_x_min - .01, z_band),
+        "right_of_ridge": (physics.ridge_x_max + .01, z_band),
+        "above_ridge": (0.5 * physics.period, torch.tensor([physics.ridge_z_min - .01], dtype=dtype)),
+        "below_ridge": (0.5 * physics.period, torch.tensor([physics.ridge_z_max + .01], dtype=dtype)),
+    }
+    values = {name: epsilon_r(torch.tensor([x], dtype=dtype), z, physics).item() for name, (x, z) in points.items()}
+    assert values["inside_ridge"] == pytest.approx(physics.eps_ridge)
+    assert values["left_of_ridge"] == pytest.approx(physics.eps_substrate)
+    assert values["right_of_ridge"] == pytest.approx(physics.eps_substrate)
+    assert values["above_ridge"] == pytest.approx(physics.eps_air)
+    assert values["below_ridge"] == pytest.approx(physics.eps_substrate)
+
+
+def test_geometry_interface_convention_is_explicit(physics, dtype):
+    """Ridge boundaries use the documented inclusive finite-rectangle rule."""
+    from src.geometry import epsilon_r
+    zmid = (physics.ridge_z_min + physics.ridge_z_max) / 2
+    for x, z in ((physics.ridge_x_min, zmid), (physics.ridge_x_max, zmid),
+                 ((physics.ridge_x_min + physics.ridge_x_max) / 2, physics.ridge_z_min),
+                 ((physics.ridge_x_min + physics.ridge_x_max) / 2, physics.ridge_z_max)):
+        got = epsilon_r(torch.tensor([x], dtype=dtype), torch.tensor([z], dtype=dtype), physics).item()
+        assert got == pytest.approx(physics.eps_ridge)
+
+
 # ---------------------------------------------------------------------------
 # 10. Source map keys
 # ---------------------------------------------------------------------------

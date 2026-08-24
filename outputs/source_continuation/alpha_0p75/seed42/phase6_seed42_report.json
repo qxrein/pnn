@@ -1,0 +1,268 @@
+{
+  "phase5_passed": false,
+  "invalid_reason": "m=-1 r amplitude; m=-1 r phase; m=-1 t amplitude; m=-1 t phase; m=1 r amplitude; m=1 t amplitude; m=1 t phase",
+  "seed": 42,
+  "best_epoch": 500,
+  "best_loss": 0.00045494074112044456,
+  "checkpoint_reloaded": true,
+  "reload_max_metric_difference": 0.0,
+  "final_metrics": {
+    "total/complex_l2": 0.04677080808244857,
+    "total/magnitude_l2": 0.033723664908220284,
+    "total/real_l2": 0.04279803295794585,
+    "total/imag_l2": 0.05269099672697585,
+    "total/phase_rmse_deg": 2.151426955624932,
+    "total/global_phase_offset_deg": 0.32960891189239294,
+    "total/n_valid": 29440,
+    "scattered/complex_l2": 0.9931550965777647,
+    "scattered/magnitude_l2": 0.9824274134857147,
+    "scattered/real_l2": 0.9987524527430477,
+    "scattered/imag_l2": 0.9871504612824454,
+    "scattered/phase_rmse_deg": 80.0083526760822,
+    "scattered/global_phase_offset_deg": 8.138050401526957,
+    "scattered/n_valid": 29440,
+    "field_representation_pinn": "scattered",
+    "field_representation_rcwa": "total",
+    "formulation": "layered_bg",
+    "background_added": true,
+    "region_mask": "external_only",
+    "pinn_representation": "scattered",
+    "reference_representation": "total",
+    "monitor_plane_top_z": 0.16,
+    "monitor_plane_bot_z": 1.84,
+    "reference_plane_refl_z": 0.0,
+    "reference_plane_trans_z": 1.4,
+    "deembedding_applied": false,
+    "ridge_base_z": 1.2,
+    "ridge_z_max": 1.4
+  },
+  "modal_comparison": {
+    "m=-1": {
+      "r_pinn_abs": 0.006709525599920819,
+      "r_rcwa_abs": 0.0002253809311910807,
+      "r_pinn_phase_deg": 39.25361681431643,
+      "r_rcwa_phase_deg": -22.582476743787936,
+      "r_abs_err": 0.006484144668729738,
+      "r_phase_err_deg": 61.836093558104366,
+      "t_pinn_abs": 0.006305997554844545,
+      "t_rcwa_abs": 0.04941078619316997,
+      "t_pinn_phase_deg": -50.041637960950894,
+      "t_rcwa_phase_deg": -168.42696995961006,
+      "t_abs_err": 0.043104788638325425,
+      "t_phase_err_deg": 118.38533199865918,
+      "R_pinn": 0.0,
+      "R_rcwa": 0.0,
+      "T_pinn": 2.9221632587748934e-05,
+      "T_rcwa": 0.0017940742307480148
+    },
+    "m=0": {
+      "r_pinn_abs": 0.18440264625581357,
+      "r_rcwa_abs": 0.19559421683346365,
+      "r_pinn_phase_deg": 92.41824359902289,
+      "r_rcwa_phase_deg": 91.02034145612208,
+      "r_abs_err": 0.011191570577650078,
+      "r_phase_err_deg": 1.3979021429007943,
+      "t_pinn_abs": 0.8163930695297817,
+      "t_rcwa_abs": 0.8128938319277009,
+      "t_pinn_phase_deg": -47.73346865036455,
+      "t_rcwa_phase_deg": -49.12770363043,
+      "t_abs_err": 0.003499237602080818,
+      "t_phase_err_deg": 1.3942349800654463,
+      "R_pinn": 0.03400433594614671,
+      "R_rcwa": 0.03825709765869599,
+      "T_pinn": 0.9664215837655756,
+      "T_rcwa": 0.9581547538798468
+    },
+    "m=1": {
+      "r_pinn_abs": 0.0007213028160851507,
+      "r_rcwa_abs": 0.0002253809311883348,
+      "r_pinn_phase_deg": -40.026058537581434,
+      "r_rcwa_phase_deg": -22.58247674382777,
+      "r_abs_err": 0.0004959218848968158,
+      "r_phase_err_deg": 17.44358179375366,
+      "t_pinn_abs": 0.0063429652154997065,
+      "t_rcwa_abs": 0.04941078619256938,
+      "t_pinn_phase_deg": -49.24641688942727,
+      "t_rcwa_phase_deg": -168.4269699596451,
+      "t_abs_err": 0.043067820977069675,
+      "t_phase_err_deg": 119.18055307021781,
+      "R_pinn": 0.0,
+      "R_rcwa": 0.0,
+      "T_pinn": 2.956524889252455e-05,
+      "T_rcwa": 0.0017940742307044003
+    },
+    "summary": {
+      "R_pinn_total": 0.03400433594614671,
+      "T_pinn_total": 0.9664803706470559,
+      "pinn_energy_check": 1.0004847065932028,
+      "R_rcwa_total": 0.03825709765869599,
+      "T_rcwa_total": 0.9617429023412993,
+      "rcwa_energy_check": 0.9999999999999953,
+      "pinn_representation": "total",
+      "reference_representation": "total",
+      "formulation": "layered_bg",
+      "background_subtracted_top": "incident_only",
+      "deembedding_applied": true
+    }
+  },
+  "modal": {
+    "orders": [
+      -1,
+      0,
+      1
+    ],
+    "r_m_complex": [
+      {
+        "real": 0.005195539282898967,
+        "imag": 0.004245480577725743
+      },
+      {
+        "real": -0.007780645272269641,
+        "imag": 0.18423842570238658
+      },
+      {
+        "real": 0.0005523390880285695,
+        "imag": -0.00046389576881896317
+      }
+    ],
+    "t_m_complex": [
+      {
+        "real": 0.004049905479595051,
+        "imag": -0.004833618806655254
+      },
+      {
+        "real": 0.5490899380556926,
+        "imag": -0.6041505473822355
+      },
+      {
+        "real": 0.004140732899536703,
+        "imag": -0.004804949404492581
+      }
+    ],
+    "r_m_abs": [
+      0.006709525599920819,
+      0.18440264625581357,
+      0.0007213028160851507
+    ],
+    "t_m_abs": [
+      0.006305997554844545,
+      0.8163930695297819,
+      0.006342965215499707
+    ],
+    "r_m_phase_deg": [
+      39.25361681431643,
+      92.41824359902289,
+      -40.026058537581434
+    ],
+    "t_m_phase_deg": [
+      -50.041637960950894,
+      -47.73346865036455,
+      -49.24641688942727
+    ],
+    "R_m": [
+      0.0,
+      0.03400433594614671,
+      0.0
+    ],
+    "T_m": [
+      2.9221632587748934e-05,
+      0.9664215837655756,
+      2.956524889252455e-05
+    ],
+    "R0": 0.03400433594614671,
+    "T0": 0.9664215837655756,
+    "r0_complex": {
+      "real": -0.007780645272269641,
+      "imag": 0.18423842570238658
+    },
+    "t0_complex": {
+      "real": 0.5490899380556926,
+      "imag": -0.6041505473822355
+    },
+    "R_total": 0.03400433594614671,
+    "T_total": 0.9664803706470559,
+    "energy_check": 1.0004847065932028,
+    "P_inc": 0.5,
+    "z_top_monitor": 0.1568627450980392,
+    "z_bot_monitor": 1.843137254901961,
+    "pinn_representation": "total",
+    "reference_representation": "total",
+    "formulation": "layered_bg",
+    "background_added": false,
+    "background_subtracted_top": "incident_only",
+    "reference_plane_refl_z": 0.0,
+    "reference_plane_trans_z": 1.4,
+    "deembedding_applied": false
+  },
+  "last_log": {
+    "epoch": 500,
+    "pde_air": 5.568587435862336e-09,
+    "pde_grating": 0.00045171341667726953,
+    "pde_substrate": 1.5901764843960443e-07,
+    "pde_total": 0.000451878002913145,
+    "top_DtN": 1.5463889748554764e-09,
+    "bottom_DtN": 4.26323332538873e-10,
+    "interface_E": 2.8743598523643625e-09,
+    "interface_H": 2.5472963057847666e-09,
+    "total_loss": 0.00045494074112044456,
+    "total/complex_l2": 0.04677080808244857,
+    "total/magnitude_l2": 0.033723664908220284,
+    "total/real_l2": 0.04279803295794585,
+    "total/imag_l2": 0.05269099672697585,
+    "total/phase_rmse_deg": 2.151426955624932,
+    "total/global_phase_offset_deg": 0.32960891189239294,
+    "total/n_valid": 29440.0,
+    "scattered/complex_l2": 0.9931550965777647,
+    "scattered/magnitude_l2": 0.9824274134857147,
+    "scattered/real_l2": 0.9987524527430477,
+    "scattered/imag_l2": 0.9871504612824454,
+    "scattered/phase_rmse_deg": 80.0083526760822,
+    "scattered/global_phase_offset_deg": 8.138050401526957,
+    "scattered/n_valid": 29440.0,
+    "background_added": 1.0,
+    "monitor_plane_top_z": 0.16,
+    "monitor_plane_bot_z": 1.84,
+    "reference_plane_refl_z": 0.0,
+    "reference_plane_trans_z": 1.4,
+    "deembedding_applied": 0.0,
+    "ridge_base_z": 1.2,
+    "ridge_z_max": 1.4,
+    "R_total": 0.03400433594614671,
+    "T_total": 0.9664803706470559,
+    "R_plus_T": 1.0004847065932028,
+    "m-1_r_pinn_abs": 0.006709525599920819,
+    "m-1_t_pinn_abs": 0.006305997554844545,
+    "m-1_r_pinn_phase_deg": 39.25361681431643,
+    "m-1_t_pinn_phase_deg": -50.041637960950894,
+    "m-1_R_pinn": 0.0,
+    "m-1_T_pinn": 2.9221632587748934e-05,
+    "m0_r_pinn_abs": 0.18440264625581357,
+    "m0_t_pinn_abs": 0.8163930695297817,
+    "m0_r_pinn_phase_deg": 92.41824359902289,
+    "m0_t_pinn_phase_deg": -47.73346865036455,
+    "m0_R_pinn": 0.03400433594614671,
+    "m0_T_pinn": 0.9664215837655756,
+    "m1_r_pinn_abs": 0.0007213028160851507,
+    "m1_t_pinn_abs": 0.0063429652154997065,
+    "m1_r_pinn_phase_deg": -40.026058537581434,
+    "m1_t_pinn_phase_deg": -49.24641688942727,
+    "m1_R_pinn": 0.0,
+    "m1_T_pinn": 2.956524889252455e-05
+  },
+  "metadata": {
+    "ablation": "source_continuation",
+    "alpha": 0.75,
+    "modal_loss_weight": 0.0,
+    "reference": {
+      "path": "/Users/rein/projects/rero/pinn_optics/outputs/reference_lambda_0p8_geometry_consistent_20260824.npz",
+      "field_representation": "total",
+      "geometry_convention": "dielectric ridge on substrate; substrate outside ridge footprint",
+      "R_total": 0.03825709765869599,
+      "T_total": 0.9617429023412993,
+      "energy_balance": 0.9999999999999953,
+      "z_top_monitor": 0.16,
+      "z_bot_monitor": 1.84,
+      "n_orders": 75
+    }
+  }
+}

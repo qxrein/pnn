@@ -1,0 +1,67 @@
+[
+  {
+    "M": 1,
+    "best_epoch": 500,
+    "modal_response_score": 0.10604432807333848,
+    "total_complex_l2": 0.04684239700574705,
+    "scattered_complex_l2": 0.9946752521394788,
+    "R_total": 0.033955885797647765,
+    "T_total": 0.9663750413726541,
+    "R_plus_T": 1.0003309271703018,
+    "tm1": 0.0063091779942943136,
+    "tp1": 0.006328192903082941,
+    "report": "/Users/rein/projects/rero/pinn_optics/outputs/modal_order_ablation/M1/seed42/phase6_seed42_report.json"
+  },
+  {
+    "M": 3,
+    "best_epoch": 500,
+    "modal_response_score": 0.10656619737577085,
+    "total_complex_l2": 0.04694096052931622,
+    "scattered_complex_l2": 0.9967682000653907,
+    "R_total": 0.03396014430413044,
+    "T_total": 0.9663239965501372,
+    "R_plus_T": 1.0002841408542678,
+    "tm1": 0.006322175511751545,
+    "tp1": 0.006339136616593467,
+    "report": "/Users/rein/projects/rero/pinn_optics/outputs/modal_order_ablation/M3/seed42/phase6_seed42_report.json"
+  },
+  {
+    "M": 5,
+    "best_epoch": 500,
+    "modal_response_score": 0.10853565344511551,
+    "total_complex_l2": 0.047012884249736556,
+    "scattered_complex_l2": 0.9982954648792544,
+    "R_total": 0.03395917825453301,
+    "T_total": 0.966332931708703,
+    "R_plus_T": 1.000292109963236,
+    "tm1": 0.006323862334392092,
+    "tp1": 0.006342100413753427,
+    "report": "/Users/rein/projects/rero/pinn_optics/outputs/modal_order_ablation/M5/seed42/phase6_seed42_report.json"
+  },
+  {
+    "M": 7,
+    "best_epoch": 500,
+    "modal_response_score": 0.10962902727061694,
+    "total_complex_l2": 0.04713733638293051,
+    "scattered_complex_l2": 1.000938144692348,
+    "R_total": 0.033957092283221475,
+    "T_total": 0.9663050029876088,
+    "R_plus_T": 1.0002620952708303,
+    "tm1": 0.00633820788777738,
+    "tp1": 0.006354671069319543,
+    "report": "/Users/rein/projects/rero/pinn_optics/outputs/modal_order_ablation/M7/seed42/phase6_seed42_report.json"
+  },
+  {
+    "M": 11,
+    "best_epoch": 500,
+    "modal_response_score": 0.10969524029127065,
+    "total_complex_l2": 0.047174469333902055,
+    "scattered_complex_l2": 1.0017266446353752,
+    "R_total": 0.03392919791826775,
+    "T_total": 0.9662544581802285,
+    "R_plus_T": 1.0001836560984962,
+    "tm1": 0.006345745764091379,
+    "tp1": 0.006364507128590444,
+    "report": "/Users/rein/projects/rero/pinn_optics/outputs/modal_order_ablation/M11/seed42/phase6_seed42_report.json"
+  }
+]

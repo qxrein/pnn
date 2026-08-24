@@ -211,9 +211,14 @@ def solve_rcwa(
     kz_sub = _kz_uniform(kx, k0, physics.eps_substrate)
 
     x_fine = np.linspace(0.0, physics.period, Nfine, endpoint=False)
+    # The ridge is a dielectric protrusion *on the substrate*.  Its grating
+    # layer therefore has substrate permittivity outside the ridge footprint,
+    # exactly as ``src.geometry.epsilon_r`` and the layered-background contrast
+    # formulation do.  Using air here made n_ridge=n_substrate spuriously
+    # diffract, violating the zero-source limit.
     eps_x = np.where(
         (x_fine >= physics.ridge_x_min) & (x_fine <= physics.ridge_x_max),
-        physics.eps_ridge, physics.eps_air,
+        physics.eps_ridge, physics.eps_substrate,
     )
     E_mat = _fourier_eps(eps_x, N)
     gamma, W = _grating_modes(E_mat, kx, k0)
@@ -382,12 +387,18 @@ def main() -> None:
              field_representation="total",
              wavelength=config.physics.wavelength,
              period=config.physics.period,
+             ridge_width=config.physics.ridge_width,
+             ridge_height=config.physics.ridge_height,
+             ridge_base_fraction=config.physics.ridge_base_fraction,
              n_air=config.physics.n_air,
              n_ridge=config.physics.n_ridge,
              n_substrate=config.physics.n_substrate,
              k0=config.physics.k0,
              domain_height=config.physics.domain_height,
              coordinate_convention="z=0 top, z increases downward, E_inc=exp(-ik0*z)",
+             geometry_convention="dielectric ridge on substrate; substrate outside ridge footprint",
+             z_top_monitor=0.08 * config.physics.domain_height,
+             z_bot_monitor=0.92 * config.physics.domain_height,
              c_refl=amps["c_refl"], c_trans=amps["c_trans"],
              kz_air=amps["kz_air"], kz_sub=amps["kz_sub"], kx=amps["kx"],
              R_m=amps["R_m"], T_m=amps["T_m"],

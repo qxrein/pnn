@@ -1,8 +1,4 @@
-# PINN Optics — 2D Maxwell PINN for Grating Scattering
-
-A research codebase implementing Physics-Informed Neural Networks (PINNs) for 2D frequency-domain TE Maxwell scattering from a binary dielectric diffraction grating. The codebase has progressed through scalar Helmholtz → first-order Maxwell → domain-decomposition → layered-background scattered-field formulations.
-
-> **Status:** Research prototype with validated RCWA reference generator. Not a production EM solver.
+Physics-Informed Neural Networks (PINNs) for 2D frequency-domain TE Maxwell scattering from a binary dielectric diffraction grating. The codebase has progressed through scalar Helmholtz → first-order Maxwell → domain-decomposition → layered-background scattered-field formulations.
 
 ## Coordinate convention
 

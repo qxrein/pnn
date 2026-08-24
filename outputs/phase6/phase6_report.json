@@ -1,0 +1,604 @@
+{
+  "phase5_passed": false,
+  "valid": false,
+  "invalid_reason": "PDE-only acceptance criteria failed; modal loss and optical coupling remain disabled.",
+  "reports": {
+    "42": {
+      "phase5_passed": false,
+      "invalid_reason": "m=-1 r amplitude; m=-1 r phase; m=-1 t amplitude; m=-1 t phase; m=1 r amplitude; m=1 r phase; m=1 t amplitude; m=1 t phase",
+      "seed": 42,
+      "best_epoch": 1,
+      "best_loss": 0.0009061328613077877,
+      "checkpoint_reloaded": true,
+      "reload_max_metric_difference": 0.0,
+      "final_metrics": {
+        "total/complex_l2": 0.04709315618840033,
+        "total/magnitude_l2": 0.03394586331015085,
+        "total/real_l2": 0.042851492219512864,
+        "total/imag_l2": 0.05337686481806743,
+        "total/phase_rmse_deg": 2.1681930198110386,
+        "total/global_phase_offset_deg": 0.32164434000561576,
+        "total/n_valid": 29440,
+        "scattered/complex_l2": 0.99999999999987,
+        "scattered/magnitude_l2": 0.99999999999987,
+        "scattered/real_l2": 0.9999999999998189,
+        "scattered/imag_l2": 0.999999999999813,
+        "scattered/phase_rmse_deg": 121.88164697592997,
+        "scattered/global_phase_offset_deg": 0.0,
+        "scattered/n_valid": 29440,
+        "field_representation_pinn": "scattered",
+        "field_representation_rcwa": "total",
+        "formulation": "layered_bg",
+        "background_added": true,
+        "region_mask": "external_only",
+        "pinn_representation": "scattered",
+        "reference_representation": "total",
+        "monitor_plane_top_z": 0.16,
+        "monitor_plane_bot_z": 1.84,
+        "reference_plane_refl_z": 0.0,
+        "reference_plane_trans_z": 1.4,
+        "deembedding_applied": false,
+        "ridge_base_z": 1.2,
+        "ridge_z_max": 1.4
+      },
+      "modal_comparison": {
+        "m=-1": {
+          "r_pinn_abs": 0.0014349489795918242,
+          "r_rcwa_abs": 0.0002253809311910807,
+          "r_pinn_phase_deg": 92.47058823529383,
+          "r_rcwa_phase_deg": -22.582476743787936,
+          "r_abs_err": 0.0012095680484007435,
+          "r_phase_err_deg": 115.05306497908178,
+          "t_pinn_abs": 0.00637755102040808,
+          "t_rcwa_abs": 0.04941078619316997,
+          "t_pinn_phase_deg": -47.71764705882372,
+          "t_rcwa_phase_deg": -168.42696995961006,
+          "t_abs_err": 0.04303323517276189,
+          "t_phase_err_deg": 120.70932290078636,
+          "R_pinn": 0.0,
+          "R_rcwa": 0.0,
+          "T_pinn": 2.9888544276592684e-05,
+          "T_rcwa": 0.0017940742307480148
+        },
+        "m=0": {
+          "r_pinn_abs": 0.1836734693877551,
+          "r_rcwa_abs": 0.19559421683346365,
+          "r_pinn_phase_deg": 92.47058823529414,
+          "r_rcwa_phase_deg": 91.02034145612208,
+          "r_abs_err": 0.011920747445708535,
+          "r_phase_err_deg": 1.4502467791720755,
+          "t_pinn_abs": 0.816326530612245,
+          "t_rcwa_abs": 0.8128938319277009,
+          "t_pinn_phase_deg": -47.71764705882357,
+          "t_rcwa_phase_deg": -49.12770363043,
+          "t_abs_err": 0.0034326986845441,
+          "t_phase_err_deg": 1.4100565716064324,
+          "R_pinn": 0.03373594335693461,
+          "R_rcwa": 0.03825709765869599,
+          "T_pinn": 0.9662640566430656,
+          "T_rcwa": 0.9581547538798468
+        },
+        "m=1": {
+          "r_pinn_abs": 0.001434948979591822,
+          "r_rcwa_abs": 0.0002253809311883348,
+          "r_pinn_phase_deg": 92.4705882352941,
+          "r_rcwa_phase_deg": -22.58247674382777,
+          "r_abs_err": 0.0012095680484034872,
+          "r_phase_err_deg": 115.05306497912187,
+          "t_pinn_abs": 0.006377551020408138,
+          "t_rcwa_abs": 0.04941078619256938,
+          "t_pinn_phase_deg": -47.71764705882352,
+          "t_rcwa_phase_deg": -168.4269699596451,
+          "t_abs_err": 0.04303323517216125,
+          "t_phase_err_deg": 120.70932290082158,
+          "R_pinn": 0.0,
+          "R_rcwa": 0.0,
+          "T_pinn": 2.9888544276593226e-05,
+          "T_rcwa": 0.0017940742307044003
+        },
+        "summary": {
+          "R_pinn_total": 0.03373594335693461,
+          "T_pinn_total": 0.9663238337316187,
+          "pinn_energy_check": 1.0000597770885533,
+          "R_rcwa_total": 0.03825709765869599,
+          "T_rcwa_total": 0.9617429023412993,
+          "rcwa_energy_check": 0.9999999999999953,
+          "pinn_representation": "total",
+          "reference_representation": "total",
+          "formulation": "layered_bg",
+          "background_subtracted_top": "incident_only",
+          "deembedding_applied": true
+        }
+      },
+      "modal": {
+        "orders": [
+          -1,
+          0,
+          1
+        ],
+        "r_m_complex": [
+          {
+            "real": -6.185568284065857e-05,
+            "imag": 0.0014336151675160016
+          },
+          {
+            "real": -0.007917527403605407,
+            "imag": 0.18350274144204978
+          },
+          {
+            "real": -6.18556828406655e-05,
+            "imag": 0.0014336151675159992
+          }
+        ],
+        "t_m_complex": [
+          {
+            "real": 0.0042907185953229565,
+            "imag": -0.004718356806522578
+          },
+          {
+            "real": 0.5492119802013473,
+            "imag": -0.6039496712348964
+          },
+          {
+            "real": 0.004290718595323012,
+            "imag": -0.004718356806522606
+          }
+        ],
+        "r_m_abs": [
+          0.0014349489795918242,
+          0.1836734693877551,
+          0.001434948979591822
+        ],
+        "t_m_abs": [
+          0.00637755102040808,
+          0.816326530612245,
+          0.006377551020408137
+        ],
+        "r_m_phase_deg": [
+          92.47058823529383,
+          92.47058823529414,
+          92.4705882352941
+        ],
+        "t_m_phase_deg": [
+          -47.71764705882372,
+          -47.71764705882357,
+          -47.71764705882352
+        ],
+        "R_m": [
+          0.0,
+          0.03373594335693461,
+          0.0
+        ],
+        "T_m": [
+          2.9888544276592684e-05,
+          0.9662640566430656,
+          2.9888544276593226e-05
+        ],
+        "R0": 0.03373594335693461,
+        "T0": 0.9662640566430656,
+        "r0_complex": {
+          "real": -0.007917527403605407,
+          "imag": 0.18350274144204978
+        },
+        "t0_complex": {
+          "real": 0.5492119802013473,
+          "imag": -0.6039496712348964
+        },
+        "R_total": 0.03373594335693461,
+        "T_total": 0.9663238337316187,
+        "energy_check": 1.0000597770885533,
+        "P_inc": 0.5,
+        "z_top_monitor": 0.1568627450980392,
+        "z_bot_monitor": 1.843137254901961,
+        "pinn_representation": "total",
+        "reference_representation": "total",
+        "formulation": "layered_bg",
+        "background_added": false,
+        "background_subtracted_top": "incident_only",
+        "reference_plane_refl_z": 0.0,
+        "reference_plane_trans_z": 1.4,
+        "deembedding_applied": false
+      },
+      "last_log": {
+        "epoch": 500,
+        "pde_air": 7.466133973748912e-43,
+        "pde_grating": 0.0009061328613077877,
+        "pde_substrate": 1.3609932885382913e-52,
+        "pde_total": 0.0009061328613077877,
+        "top_DtN": 2.3701891336104287e-38,
+        "bottom_DtN": 1.2732187522341604e-20,
+        "interface_E": 1.8113053636192356e-20,
+        "interface_H": 2.4647908622024315e-20,
+        "total_loss": 0.0009061328613078105,
+        "total/complex_l2": 0.047093157579224144,
+        "total/magnitude_l2": 0.033945863838721314,
+        "total/real_l2": 0.04285149290269908,
+        "total/imag_l2": 0.0533768671681312,
+        "total/phase_rmse_deg": 2.168193083471488,
+        "total/global_phase_offset_deg": 0.3216439565899203,
+        "total/n_valid": 29440.0,
+        "scattered/complex_l2": 1.0000000295333293,
+        "scattered/magnitude_l2": 0.9999964829148533,
+        "scattered/real_l2": 1.0000000159429325,
+        "scattered/imag_l2": 1.0000000440275725,
+        "scattered/phase_rmse_deg": 112.7457388625704,
+        "scattered/global_phase_offset_deg": -140.1413411079164,
+        "scattered/n_valid": 29440.0,
+        "background_added": 1.0,
+        "monitor_plane_top_z": 0.16,
+        "monitor_plane_bot_z": 1.84,
+        "reference_plane_refl_z": 0.0,
+        "reference_plane_trans_z": 1.4,
+        "deembedding_applied": 0.0,
+        "ridge_base_z": 1.2,
+        "ridge_z_max": 1.4,
+        "R_total": 0.0337359377553682,
+        "T_total": 0.9663238336746994,
+        "R_plus_T": 1.0000597714300676,
+        "m-1_r_pinn_abs": 0.0014349351609274173,
+        "m-1_t_pinn_abs": 0.00637755104705589,
+        "m-1_r_pinn_phase_deg": 92.47081156029672,
+        "m-1_t_pinn_phase_deg": -47.717647241284595,
+        "m-1_R_pinn": 0.0,
+        "m-1_T_pinn": 2.988854452636387e-05,
+        "m0_r_pinn_abs": 0.1836734541390459,
+        "m0_t_pinn_abs": 0.8163265305880123,
+        "m0_r_pinn_phase_deg": 92.47058975238903,
+        "m0_t_pinn_phase_deg": -47.717647060251906,
+        "m0_R_pinn": 0.0337359377553682,
+        "m0_T_pinn": 0.9662640565856985,
+        "m1_r_pinn_abs": 0.0014349353075725178,
+        "m1_t_pinn_abs": 0.006377551041537418,
+        "m1_r_pinn_phase_deg": 92.47077849132448,
+        "m1_t_pinn_phase_deg": -47.71764689309018,
+        "m1_R_pinn": 0.0,
+        "m1_T_pinn": 2.988854447463897e-05
+      },
+      "metadata": {
+        "case": "lambda_0p8",
+        "formulation": "layered_bg",
+        "boundary": "DtN",
+        "dtype": "float64",
+        "device": "cpu",
+        "modal_loss_weight": 0.0,
+        "reference": {
+          "path": "/Users/rein/projects/rero/pinn_optics/outputs/reference_lambda_0p8_geometry_consistent_20260824.npz",
+          "field_representation": "total",
+          "geometry_convention": "dielectric ridge on substrate; substrate outside ridge footprint",
+          "R_total": 0.03825709765869599,
+          "T_total": 0.9617429023412993,
+          "energy_balance": 0.9999999999999953,
+          "z_top_monitor": 0.16,
+          "z_bot_monitor": 1.84,
+          "n_orders": 75
+        },
+        "wavelength": 1.0,
+        "period": 0.8,
+        "ridge_width": 0.32000000000000006,
+        "ridge_height": 0.2,
+        "n_ridge": 1.5,
+        "n_substrate": 1.45,
+        "monitor_planes": {
+          "top": 0.16,
+          "bottom": 1.84
+        },
+        "git_commit": "4cf1a957e94a0d7100e4c4b60edf94f2ddc9a6a3",
+        "config_hash": "da05e1ddd7b137a64e05a91ead70a71737e8f9a27880720565de100c0e472590"
+      }
+    },
+    "123": {
+      "phase5_passed": false,
+      "invalid_reason": "m=-1 r amplitude; m=-1 r phase; m=-1 t amplitude; m=-1 t phase; m=1 r amplitude; m=1 r phase; m=1 t amplitude; m=1 t phase",
+      "seed": 123,
+      "best_epoch": 1,
+      "best_loss": 0.00075511071775649,
+      "checkpoint_reloaded": true,
+      "reload_max_metric_difference": 0.0,
+      "final_metrics": {
+        "total/complex_l2": 0.04709315618840033,
+        "total/magnitude_l2": 0.03394586331015085,
+        "total/real_l2": 0.042851492219512864,
+        "total/imag_l2": 0.05337686481806743,
+        "total/phase_rmse_deg": 2.1681930198110386,
+        "total/global_phase_offset_deg": 0.32164434000561576,
+        "total/n_valid": 29440,
+        "scattered/complex_l2": 0.99999999999987,
+        "scattered/magnitude_l2": 0.99999999999987,
+        "scattered/real_l2": 0.9999999999998189,
+        "scattered/imag_l2": 0.999999999999813,
+        "scattered/phase_rmse_deg": 121.88164697592997,
+        "scattered/global_phase_offset_deg": 0.0,
+        "scattered/n_valid": 29440,
+        "field_representation_pinn": "scattered",
+        "field_representation_rcwa": "total",
+        "formulation": "layered_bg",
+        "background_added": true,
+        "region_mask": "external_only",
+        "pinn_representation": "scattered",
+        "reference_representation": "total",
+        "monitor_plane_top_z": 0.16,
+        "monitor_plane_bot_z": 1.84,
+        "reference_plane_refl_z": 0.0,
+        "reference_plane_trans_z": 1.4,
+        "deembedding_applied": false,
+        "ridge_base_z": 1.2,
+        "ridge_z_max": 1.4
+      },
+      "modal_comparison": {
+        "m=-1": {
+          "r_pinn_abs": 0.0014349489795918242,
+          "r_rcwa_abs": 0.0002253809311910807,
+          "r_pinn_phase_deg": 92.47058823529383,
+          "r_rcwa_phase_deg": -22.582476743787936,
+          "r_abs_err": 0.0012095680484007435,
+          "r_phase_err_deg": 115.05306497908178,
+          "t_pinn_abs": 0.00637755102040808,
+          "t_rcwa_abs": 0.04941078619316997,
+          "t_pinn_phase_deg": -47.71764705882372,
+          "t_rcwa_phase_deg": -168.42696995961006,
+          "t_abs_err": 0.04303323517276189,
+          "t_phase_err_deg": 120.70932290078636,
+          "R_pinn": 0.0,
+          "R_rcwa": 0.0,
+          "T_pinn": 2.9888544276592684e-05,
+          "T_rcwa": 0.0017940742307480148
+        },
+        "m=0": {
+          "r_pinn_abs": 0.1836734693877551,
+          "r_rcwa_abs": 0.19559421683346365,
+          "r_pinn_phase_deg": 92.47058823529414,
+          "r_rcwa_phase_deg": 91.02034145612208,
+          "r_abs_err": 0.011920747445708535,
+          "r_phase_err_deg": 1.4502467791720755,
+          "t_pinn_abs": 0.816326530612245,
+          "t_rcwa_abs": 0.8128938319277009,
+          "t_pinn_phase_deg": -47.71764705882357,
+          "t_rcwa_phase_deg": -49.12770363043,
+          "t_abs_err": 0.0034326986845441,
+          "t_phase_err_deg": 1.4100565716064324,
+          "R_pinn": 0.03373594335693461,
+          "R_rcwa": 0.03825709765869599,
+          "T_pinn": 0.9662640566430656,
+          "T_rcwa": 0.9581547538798468
+        },
+        "m=1": {
+          "r_pinn_abs": 0.001434948979591822,
+          "r_rcwa_abs": 0.0002253809311883348,
+          "r_pinn_phase_deg": 92.4705882352941,
+          "r_rcwa_phase_deg": -22.58247674382777,
+          "r_abs_err": 0.0012095680484034872,
+          "r_phase_err_deg": 115.05306497912187,
+          "t_pinn_abs": 0.006377551020408138,
+          "t_rcwa_abs": 0.04941078619256938,
+          "t_pinn_phase_deg": -47.71764705882352,
+          "t_rcwa_phase_deg": -168.4269699596451,
+          "t_abs_err": 0.04303323517216125,
+          "t_phase_err_deg": 120.70932290082158,
+          "R_pinn": 0.0,
+          "R_rcwa": 0.0,
+          "T_pinn": 2.9888544276593226e-05,
+          "T_rcwa": 0.0017940742307044003
+        },
+        "summary": {
+          "R_pinn_total": 0.03373594335693461,
+          "T_pinn_total": 0.9663238337316187,
+          "pinn_energy_check": 1.0000597770885533,
+          "R_rcwa_total": 0.03825709765869599,
+          "T_rcwa_total": 0.9617429023412993,
+          "rcwa_energy_check": 0.9999999999999953,
+          "pinn_representation": "total",
+          "reference_representation": "total",
+          "formulation": "layered_bg",
+          "background_subtracted_top": "incident_only",
+          "deembedding_applied": true
+        }
+      },
+      "modal": {
+        "orders": [
+          -1,
+          0,
+          1
+        ],
+        "r_m_complex": [
+          {
+            "real": -6.185568284065857e-05,
+            "imag": 0.0014336151675160016
+          },
+          {
+            "real": -0.007917527403605407,
+            "imag": 0.18350274144204978
+          },
+          {
+            "real": -6.18556828406655e-05,
+            "imag": 0.0014336151675159992
+          }
+        ],
+        "t_m_complex": [
+          {
+            "real": 0.0042907185953229565,
+            "imag": -0.004718356806522578
+          },
+          {
+            "real": 0.5492119802013473,
+            "imag": -0.6039496712348964
+          },
+          {
+            "real": 0.004290718595323012,
+            "imag": -0.004718356806522606
+          }
+        ],
+        "r_m_abs": [
+          0.0014349489795918242,
+          0.1836734693877551,
+          0.001434948979591822
+        ],
+        "t_m_abs": [
+          0.00637755102040808,
+          0.816326530612245,
+          0.006377551020408137
+        ],
+        "r_m_phase_deg": [
+          92.47058823529383,
+          92.47058823529414,
+          92.4705882352941
+        ],
+        "t_m_phase_deg": [
+          -47.71764705882372,
+          -47.71764705882357,
+          -47.71764705882352
+        ],
+        "R_m": [
+          0.0,
+          0.03373594335693461,
+          0.0
+        ],
+        "T_m": [
+          2.9888544276592684e-05,
+          0.9662640566430656,
+          2.9888544276593226e-05
+        ],
+        "R0": 0.03373594335693461,
+        "T0": 0.9662640566430656,
+        "r0_complex": {
+          "real": -0.007917527403605407,
+          "imag": 0.18350274144204978
+        },
+        "t0_complex": {
+          "real": 0.5492119802013473,
+          "imag": -0.6039496712348964
+        },
+        "R_total": 0.03373594335693461,
+        "T_total": 0.9663238337316187,
+        "energy_check": 1.0000597770885533,
+        "P_inc": 0.5,
+        "z_top_monitor": 0.1568627450980392,
+        "z_bot_monitor": 1.843137254901961,
+        "pinn_representation": "total",
+        "reference_representation": "total",
+        "formulation": "layered_bg",
+        "background_added": false,
+        "background_subtracted_top": "incident_only",
+        "reference_plane_refl_z": 0.0,
+        "reference_plane_trans_z": 1.4,
+        "deembedding_applied": false
+      },
+      "last_log": {
+        "epoch": 500,
+        "pde_air": 5.076714531824258e-42,
+        "pde_grating": 0.00075511071775649,
+        "pde_substrate": 5.796332424339912e-55,
+        "pde_total": 0.00075511071775649,
+        "top_DtN": 1.4762302901754464e-37,
+        "bottom_DtN": 1.7759576938165528e-22,
+        "interface_E": 4.33945443095904e-21,
+        "interface_H": 1.663198780162126e-20,
+        "total_loss": 0.0007551107177565005,
+        "total/complex_l2": 0.047093158531155255,
+        "total/magnitude_l2": 0.03394586528461674,
+        "total/real_l2": 0.04285149514734457,
+        "total/imag_l2": 0.05337686641583561,
+        "total/phase_rmse_deg": 2.1681930809926255,
+        "total/global_phase_offset_deg": 0.3216440309905818,
+        "total/n_valid": 29440.0,
+        "scattered/complex_l2": 1.000000049747118,
+        "scattered/magnitude_l2": 0.999991237399398,
+        "scattered/real_l2": 1.0000000683249004,
+        "scattered/imag_l2": 1.000000029933534,
+        "scattered/phase_rmse_deg": 102.18385360277051,
+        "scattered/global_phase_offset_deg": 179.37106123239977,
+        "scattered/n_valid": 29440.0,
+        "background_added": 1.0,
+        "monitor_plane_top_z": 0.16,
+        "monitor_plane_bot_z": 1.84,
+        "reference_plane_refl_z": 0.0,
+        "reference_plane_trans_z": 1.4,
+        "deembedding_applied": 0.0,
+        "ridge_base_z": 1.2,
+        "ridge_z_max": 1.4,
+        "R_total": 0.03373593987833164,
+        "T_total": 0.9663238337230136,
+        "R_plus_T": 1.0000597736013452,
+        "m-1_r_pinn_abs": 0.001434939702605757,
+        "m-1_t_pinn_abs": 0.006377551020273417,
+        "m-1_r_pinn_phase_deg": 92.4712218331767,
+        "m-1_t_pinn_phase_deg": -47.717647051900514,
+        "m-1_R_pinn": 0.0,
+        "m-1_T_pinn": 2.988854427533048e-05,
+        "m0_r_pinn_abs": 0.18367345991822456,
+        "m0_t_pinn_abs": 0.8163265306086158,
+        "m0_r_pinn_phase_deg": 92.47059311292305,
+        "m0_t_pinn_phase_deg": -47.717647058648595,
+        "m0_R_pinn": 0.03373593987833164,
+        "m0_T_pinn": 0.9662640566344741,
+        "m1_r_pinn_abs": 0.0014349398421333584,
+        "m1_t_pinn_abs": 0.006377551019080842,
+        "m1_r_pinn_phase_deg": 92.47119961001361,
+        "m1_t_pinn_phase_deg": -47.717647077793465,
+        "m1_R_pinn": 0.0,
+        "m1_T_pinn": 2.9888544264152423e-05
+      },
+      "metadata": {
+        "case": "lambda_0p8",
+        "formulation": "layered_bg",
+        "boundary": "DtN",
+        "dtype": "float64",
+        "device": "cpu",
+        "modal_loss_weight": 0.0,
+        "reference": {
+          "path": "/Users/rein/projects/rero/pinn_optics/outputs/reference_lambda_0p8_geometry_consistent_20260824.npz",
+          "field_representation": "total",
+          "geometry_convention": "dielectric ridge on substrate; substrate outside ridge footprint",
+          "R_total": 0.03825709765869599,
+          "T_total": 0.9617429023412993,
+          "energy_balance": 0.9999999999999953,
+          "z_top_monitor": 0.16,
+          "z_bot_monitor": 1.84,
+          "n_orders": 75
+        },
+        "wavelength": 1.0,
+        "period": 0.8,
+        "ridge_width": 0.32000000000000006,
+        "ridge_height": 0.2,
+        "n_ridge": 1.5,
+        "n_substrate": 1.45,
+        "monitor_planes": {
+          "top": 0.16,
+          "bottom": 1.84
+        },
+        "git_commit": "4cf1a957e94a0d7100e4c4b60edf94f2ddc9a6a3",
+        "config_hash": "da05e1ddd7b137a64e05a91ead70a71737e8f9a27880720565de100c0e472590"
+      }
+    }
+  },
+  "metadata": {
+    "case": "lambda_0p8",
+    "formulation": "layered_bg",
+    "boundary": "DtN",
+    "dtype": "float64",
+    "device": "cpu",
+    "modal_loss_weight": 0.0,
+    "reference": {
+      "path": "/Users/rein/projects/rero/pinn_optics/outputs/reference_lambda_0p8_geometry_consistent_20260824.npz",
+      "field_representation": "total",
+      "geometry_convention": "dielectric ridge on substrate; substrate outside ridge footprint",
+      "R_total": 0.03825709765869599,
+      "T_total": 0.9617429023412993,
+      "energy_balance": 0.9999999999999953,
+      "z_top_monitor": 0.16,
+      "z_bot_monitor": 1.84,
+      "n_orders": 75
+    },
+    "wavelength": 1.0,
+    "period": 0.8,
+    "ridge_width": 0.32000000000000006,
+    "ridge_height": 0.2,
+    "n_ridge": 1.5,
+    "n_substrate": 1.45,
+    "monitor_planes": {
+      "top": 0.16,
+      "bottom": 1.84
+    },
+    "git_commit": "4cf1a957e94a0d7100e4c4b60edf94f2ddc9a6a3",
+    "config_hash": "da05e1ddd7b137a64e05a91ead70a71737e8f9a27880720565de100c0e472590"
+  }
+}
