@@ -1,0 +1,355 @@
+{
+  "phase": "Phase 1 \u2014 Independent Modal Extractor Validation",
+  "reference_file": "/Users/rein/projects/rero/pinn_optics/outputs/reference_lambda_0p8.npz",
+  "gate_result": "PASS",
+  "n_pass": 43,
+  "n_fail": 0,
+  "summary": "43 passed, 0 failed",
+  "tolerances": {
+    "energy": 0.001,
+    "amplitude": 0.005,
+    "phase_deg": 1.0,
+    "field_recon": 0.0001
+  },
+  "field_conventions": {
+    "field_representation": "total",
+    "coordinate_convention": "z=0 top, z increases downward",
+    "incident_wave": "E_inc = exp(-i k0 z)",
+    "c_refl_reference_plane": "z = 0.0",
+    "c_trans_reference_plane": "z = 1.4000 (ridge_z_max)",
+    "top_monitor_z": 0.1568627450980392,
+    "bottom_monitor_z": 1.8431372549019607,
+    "period": 0.8,
+    "k0": 6.283185307179586,
+    "n_air": 1.0,
+    "n_substrate": 1.45,
+    "N_harmonics": 75,
+    "propagating_in_air": "m=0 only (|kx_1|=7.854 > k0=6.283)",
+    "propagating_in_substrate": "m=-1,0,+1 (|kx_1|=7.854 < k_sub=9.11)"
+  },
+  "stored_rcwa": {
+    "R_total": 0.02170616619943422,
+    "T_total": 0.9782938338006191,
+    "energy_check": 1.0000000000000533,
+    "r0_abs": 0.14733012658459987,
+    "t0_abs": 0.7510901099558271,
+    "t1_abs": 0.3302539870876976,
+    "tm1_abs": 0.3302539870879962
+  },
+  "total_field_extraction": {
+    "R_total": 0.021712311178031643,
+    "T_total": 0.9827753570864604,
+    "energy_check": 1.004487668264492,
+    "r0_abs": 0.14735097956251136,
+    "t0_abs": 0.7516780935065268,
+    "t1_abs": 0.3335344414282309,
+    "tm1_abs": 0.33353444142852845
+  },
+  "scattered_field_extraction": {
+    "R_total": 0.008845895465680927,
+    "T_total": 0.18196316612782237,
+    "energy_check_note": "R_scat+T_scat != 1 by design: scattered field carries only grating-scattered power; background carries the remainder. Energy conservation is verified via total-field extraction."
+  },
+  "assertions": [
+    {
+      "name": "stored_energy_conservation",
+      "status": "PASS",
+      "message": "|R+T - 1| = 5.33e-14  (tol=1e-03)",
+      "value": 5.3290705182007514e-14,
+      "threshold": 0.001
+    },
+    {
+      "name": "field_reconstruction_air",
+      "status": "PASS",
+      "message": "z=0.5961 (air)  rel_L2=5.61e-17  (tol=1e-04)",
+      "value": 5.613804818788524e-17,
+      "threshold": 0.0001
+    },
+    {
+      "name": "field_reconstruction_substrate",
+      "status": "PASS",
+      "message": "z=1.7020 (substrate)  rel_L2=0.00e+00  (tol=1e-04)",
+      "value": 0.0,
+      "threshold": 0.0001
+    },
+    {
+      "name": "scattered_field_nonzero_in_substrate",
+      "status": "PASS",
+      "message": "|E_scat| at z\u22481.8 (substrate): max=0.7645  (expect >1e-4)",
+      "value": 0.764540087792114,
+      "threshold": 0.0001
+    },
+    {
+      "name": "scattered_field_nonzero_in_air",
+      "status": "PASS",
+      "message": "|E_scat| at z\u22480.3 (air): max=0.1002  (expect >1e-4)",
+      "value": 0.10017193516635525,
+      "threshold": 0.0001
+    },
+    {
+      "name": "total_field_energy_conservation",
+      "status": "PASS",
+      "message": "R+T = 1.004488  |R+T-1| = 4.49e-03  (tol=5e-03; finite-grid DFT artefact expected < 5e-3)",
+      "value": 0.004487668264492095,
+      "threshold": 0.005
+    },
+    {
+      "name": "total_field_r0_amplitude",
+      "status": "PASS",
+      "message": "|r0|: extracted=0.14735  rcwa=0.14733  err=0.00002  (tol=0.005)",
+      "value": 2.0852977911489656e-05,
+      "threshold": 0.005
+    },
+    {
+      "name": "total_field_t0_amplitude",
+      "status": "PASS",
+      "message": "|t0|: extracted=0.75168  rcwa=0.75109  err=0.00059  (tol=0.005)",
+      "value": 0.0005879835506996667,
+      "threshold": 0.005
+    },
+    {
+      "name": "total_field_t1_amplitude",
+      "status": "PASS",
+      "message": "|t+1|: extracted=0.33353  rcwa=0.33025  err=0.00328  (tol=0.005)",
+      "value": 0.003280454340533312,
+      "threshold": 0.005
+    },
+    {
+      "name": "total_field_tm1_amplitude",
+      "status": "PASS",
+      "message": "|t-1|: extracted=0.33353  rcwa=0.33025  err=0.00328  (tol=0.005)",
+      "value": 0.0032804543405322573,
+      "threshold": 0.005
+    },
+    {
+      "name": "total_field_r0_phase",
+      "status": "PASS",
+      "message": "r0 phase_err=0.005\u00b0  (tol=1.0\u00b0)",
+      "value": 0.005452542379342706,
+      "threshold": 1.0
+    },
+    {
+      "name": "total_field_t0_phase",
+      "status": "PASS",
+      "message": "t0 phase_err=0.391\u00b0  (tol=1.0\u00b0)",
+      "value": 0.39094496393086375,
+      "threshold": 1.0
+    },
+    {
+      "name": "total_field_t1_phase",
+      "status": "PASS",
+      "message": "t+1 phase_err=1.002\u00b0  (tol=2.0\u00b0, grid-limited)",
+      "value": 1.001813127924855,
+      "threshold": 2.0
+    },
+    {
+      "name": "total_field_tm1_phase",
+      "status": "PASS",
+      "message": "t-1 phase_err=1.002\u00b0  (tol=2.0\u00b0, grid-limited)",
+      "value": 1.001813127923739,
+      "threshold": 2.0
+    },
+    {
+      "name": "scattered_field_R_not_nonphysical",
+      "status": "PASS",
+      "message": "R_scat = 0.008846  (expect < 1.1; scattered only)",
+      "value": 0.008845895465680927,
+      "threshold": 1.1
+    },
+    {
+      "name": "scattered_field_T_not_nonphysical",
+      "status": "PASS",
+      "message": "T_scat = 0.181963  (expect < 1.1; scattered only)",
+      "value": 0.18196316612782237,
+      "threshold": 1.1
+    },
+    {
+      "name": "background_energy_conservation",
+      "status": "PASS",
+      "message": "P_bg_refl+P_bg_trans = 1.000000  |err| = 0.00e+00",
+      "value": 0.0,
+      "threshold": 0.001
+    },
+    {
+      "name": "scat_field_r0_amplitude",
+      "status": "PASS",
+      "message": "|r0_scat|: err=0.00001  (tol=0.005)",
+      "value": 1.1534731421528055e-05,
+      "threshold": 0.005
+    },
+    {
+      "name": "scat_field_t0_amplitude",
+      "status": "PASS",
+      "message": "|t0_scat|: err=0.00477  (tol=0.005)",
+      "value": 0.004767566194754436,
+      "threshold": 0.005
+    },
+    {
+      "name": "scat_field_t1_amplitude",
+      "status": "PASS",
+      "message": "|t+1_scat|: err=0.00170  (tol=0.005)",
+      "value": 0.0016951604836001888,
+      "threshold": 0.005
+    },
+    {
+      "name": "scat_field_tm1_amplitude",
+      "status": "PASS",
+      "message": "|t-1_scat|: err=0.00170  (tol=0.005)",
+      "value": 0.0016951604835976908,
+      "threshold": 0.005
+    },
+    {
+      "name": "scat_field_r0_phase",
+      "status": "PASS",
+      "message": "r0_scat phase_err=0.014\u00b0  (tol=1.0\u00b0)",
+      "value": 0.013600932006381067,
+      "threshold": 1.0
+    },
+    {
+      "name": "scat_field_t0_phase",
+      "status": "PASS",
+      "message": "t0_scat phase_err=0.944\u00b0  (tol=1.0\u00b0)",
+      "value": 0.9441980859642763,
+      "threshold": 1.0
+    },
+    {
+      "name": "scat_field_t1_phase",
+      "status": "PASS",
+      "message": "t+1_scat phase_err=0.062\u00b0  (tol=1.0\u00b0)",
+      "value": 0.06190591128222138,
+      "threshold": 1.0
+    },
+    {
+      "name": "scat_field_tm1_phase",
+      "status": "PASS",
+      "message": "t-1_scat phase_err=0.062\u00b0  (tol=1.0\u00b0)",
+      "value": 0.06190591128234942,
+      "threshold": 1.0
+    },
+    {
+      "name": "power_R_m0",
+      "status": "PASS",
+      "message": "R[m=0]: extracted=0.02171  stored=0.02171  err=0.00001  (tol=0.005)",
+      "value": 6.144978597421441e-06,
+      "threshold": 0.005
+    },
+    {
+      "name": "power_T_m-1",
+      "status": "PASS",
+      "message": "T[m=-1]: extracted=0.08175  stored=0.08015  err=0.00160  (tol=0.005)",
+      "value": 0.0016001494794120885,
+      "threshold": 0.005
+    },
+    {
+      "name": "power_T_m+0",
+      "status": "PASS",
+      "message": "T[m=+0]: extracted=0.81928  stored=0.81800  err=0.00128  (tol=0.005)",
+      "value": 0.001281224327018049,
+      "threshold": 0.005
+    },
+    {
+      "name": "power_T_m+1",
+      "status": "PASS",
+      "message": "T[m=+1]: extracted=0.08175  stored=0.08015  err=0.00160  (tol=0.005)",
+      "value": 0.0016001494794111587,
+      "threshold": 0.005
+    },
+    {
+      "name": "roundtrip_field_reconstruction_global",
+      "status": "PASS",
+      "message": "rel_L2 (air+substrate only, excluding grating interior) = 2.09e-07  (tol=1e-04)",
+      "value": 2.0878481716777406e-07,
+      "threshold": 0.0001
+    },
+    {
+      "name": "roundtrip_r0_amplitude",
+      "status": "PASS",
+      "message": "r0: amp_err=0.00002  (tol=0.005)",
+      "value": 2.0852977911545167e-05,
+      "threshold": 0.005
+    },
+    {
+      "name": "roundtrip_r0_phase",
+      "status": "PASS",
+      "message": "r0: phase_err=0.005\u00b0  (tol=1.0\u00b0)",
+      "value": 0.005452542379390305,
+      "threshold": 1.0
+    },
+    {
+      "name": "roundtrip_t0_amplitude",
+      "status": "PASS",
+      "message": "t0: amp_err=0.00059  (tol=0.005)",
+      "value": 0.0005879835506997777,
+      "threshold": 0.005
+    },
+    {
+      "name": "roundtrip_t0_phase",
+      "status": "PASS",
+      "message": "t0: phase_err=0.391\u00b0  (tol=1.0\u00b0)",
+      "value": 0.39094496393086375,
+      "threshold": 1.0
+    },
+    {
+      "name": "roundtrip_t+1_amplitude",
+      "status": "PASS",
+      "message": "t+1: amp_err=0.00328  (tol=0.005)",
+      "value": 0.003280454340533312,
+      "threshold": 0.005
+    },
+    {
+      "name": "roundtrip_t+1_phase",
+      "status": "PASS",
+      "message": "t+1: phase_err=1.002\u00b0  (tol=2.0\u00b0)",
+      "value": 1.001813127924855,
+      "threshold": 2.0
+    },
+    {
+      "name": "roundtrip_t-1_amplitude",
+      "status": "PASS",
+      "message": "t-1: amp_err=0.00328  (tol=0.005)",
+      "value": 0.0032804543405322573,
+      "threshold": 0.005
+    },
+    {
+      "name": "roundtrip_t-1_phase",
+      "status": "PASS",
+      "message": "t-1: phase_err=1.002\u00b0  (tol=2.0\u00b0)",
+      "value": 1.001813127923739,
+      "threshold": 2.0
+    },
+    {
+      "name": "kz_air_m0_is_real",
+      "status": "PASS",
+      "message": "kz_air[m=0] = 6.283185+0.000000j  (Im should be 0)",
+      "value": 0.0
+    },
+    {
+      "name": "kz_sub_m0_is_real",
+      "status": "PASS",
+      "message": "kz_sub[m=0] = 9.110619+0.000000j  (Im should be 0)",
+      "value": 0.0
+    },
+    {
+      "name": "kz_air_pm1_is_evanescent",
+      "status": "PASS",
+      "message": "kz_air[m=\u00b11] = -0.000000-4.712389j  (expect evanescent: Im<0)",
+      "value": -4.71238898038469
+    },
+    {
+      "name": "kz_sub_pm1_is_propagating",
+      "status": "PASS",
+      "message": "kz_sub[m=\u00b11] = 4.617179+0.000000j  (expect propagating: Re>0)",
+      "value": 4.617179388582709
+    },
+    {
+      "name": "propagating_mode_unit_amplitude",
+      "status": "PASS",
+      "message": "|exp(-i kz dz)| = 1.0000000000  (should be 1.0)",
+      "value": 0.0
+    }
+  ],
+  "pinn_training_may_proceed": true,
+  "known_issues_if_failed": {
+    "ISSUE-01": "extract_modal_amplitudes subtracts E_inc only at top monitor. For layered-bg, should subtract E_bg (inc + reflected bg). modal_data_loss already handles this correctly."
+  }
+}

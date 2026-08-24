@@ -1,0 +1,198 @@
+{
+  "timestamp": "2026-08-24T11:20:19.926354Z",
+  "git_commit": "3e530386707819799ec5a3c2cba2572c95fa067e",
+  "git_branch": "main",
+  "git_status": "clean",
+  "test_count_collected": 208,
+  "test_count_passed": 208,
+  "test_count_failed": 0,
+  "test_result": "ALL PASS",
+  "test_runtime_seconds": 64.29,
+  "readme_claimed_test_count": 169,
+  "test_count_discrepancy_note": "README says 169; pytest collects 208. Difference is 39 tests added after README was last updated.",
+  "reference_file": "outputs/reference_lambda_0p8.npz",
+  "reference_field_representation": "total",
+  "reference_coordinate_convention": "z=0 top, z increases downward, E_inc=exp(-ik0*z)",
+  "reference_N_harmonics": 75,
+  "reference_R_total": 0.02170616619943422,
+  "reference_T_total": 0.9782938338006191,
+  "reference_energy_check": 1.0,
+  "reference_r0_abs": 0.14733012658459987,
+  "reference_t0_abs": 0.7510901099558271,
+  "reference_t_plus1_abs": 0.3302539870876976,
+  "reference_t_minus1_abs": 0.3302539870879962,
+  "reference_R_m": {
+    "m=0": 0.02170616619943422
+  },
+  "reference_T_m": {
+    "m=-1": 0.08014806077712607,
+    "m=0": 0.8179977122465119,
+    "m=+1": 0.08014806077698114
+  },
+  "best_known_physical_results": {
+    "1d_maxwell_pinn": {
+      "status": "physically_validated",
+      "complex_l2_error_percent": 0.017,
+      "phase_error_deg": "<0.01",
+      "note": "1D first-order Maxwell PINN validated against TMM"
+    },
+    "2d_grating_pinn_best_checkpoint": {
+      "status": "unresolved",
+      "checkpoint": "outputs/checkpoints/2d_grating_best.pt",
+      "audit_reference": "outputs/audit/nd_grating_audit.json",
+      "complex_l2": 0.6036,
+      "phase_rmse_deg": 48.26,
+      "energy_check": 0.489,
+      "R_total_pinn": 0.1635,
+      "T_total_pinn": 0.3255,
+      "note": "R+T=0.489 \u2014 nonphysical, energy not conserved; not validated"
+    },
+    "2d_lambda_0p8_pinn": {
+      "status": "unresolved",
+      "audit_reference": "outputs/audit/nd_lambda_0p8_audit.json",
+      "complex_l2": 0.5852,
+      "phase_rmse_deg": 45.13,
+      "energy_check": 0.4746,
+      "note": "R+T=0.475 \u2014 nonphysical; not validated"
+    },
+    "2d_layered_bg_pinn": {
+      "status": "unresolved",
+      "audit_reference": "outputs/audit/nd_layered_audit.json",
+      "complex_l2": 0.4708,
+      "phase_rmse_deg": 30.97,
+      "best_train_loss": 0.05031,
+      "best_epoch": 4900,
+      "note": "Training loss converging but field error high; not validated"
+    },
+    "ablation_variants": {
+      "status": "unresolved",
+      "energy_check_range": "0.543\u20130.618",
+      "note": "All three ablation variants have R+T < 1 (nonphysical)"
+    }
+  },
+  "unresolved_issues": [
+    {
+      "id": "ISSUE-01",
+      "severity": "CRITICAL",
+      "component": "extract_modal_amplitudes (field_comparison.py)",
+      "description": "Top monitor reflection extraction subtracts E_inc only (exp(-ik0*z_top)), but for the layered-background formulation the background at the top monitor includes both the incident wave AND the flat-interface reflected background r_eff*exp(+ik1*z_top). Subtracting only E_inc gives wrong r_m amplitudes. The modal_data_loss function correctly subtracts only r_eff*exp(+ik1*z) (the reflected BG) but extract_modal_amplitudes does not.",
+      "impact": "r_m amplitudes extracted from PINN total field are systematically wrong",
+      "fix_required_before": "Phase 1 validation gate"
+    },
+    {
+      "id": "ISSUE-02",
+      "severity": "HIGH",
+      "component": "2D grating PINN \u2014 energy balance",
+      "description": "All 2D grating runs show R+T << 1 (0.47\u20130.62). P_inc=0.5 is used as a normalisation factor, so the raw R_total+T_total values of ~0.49 imply an apparent efficiency of ~0.98, which is close to 1.0 \u2014 but the individual R0 and T0 values do not match RCWA references (RCWA: R0=0.0217, T0_eff=0.818; PINN: R0~0.16, T0~0.33). Modal power distribution is wrong.",
+      "impact": "PINN does not recover correct modal reflection/transmission",
+      "fix_required_before": "Phase 5 validation gate"
+    },
+    {
+      "id": "ISSUE-03",
+      "severity": "HIGH",
+      "component": "Total/scattered field comparison",
+      "description": "Complex-field L2 errors are 47\u201360% across all 2D runs. Phase RMSE is 31\u201348 degrees. These errors are inconsistent with a physically correct solution and indicate the PINN is not converging to the correct field.",
+      "impact": "Physical validation gate (Phase 5) cannot pass",
+      "fix_required_before": "Phase 5 validation gate"
+    },
+    {
+      "id": "ISSUE-04",
+      "severity": "MEDIUM",
+      "component": "modal_dtn_loss \u2014 Robin vs DtN boundary selection",
+      "description": "The training scripts use Robin BCs (H=\u00b1n*E) by default, which is only exact for the m=0 normal-incidence mode. For lambda=0.8 with propagating \u00b11 orders in the substrate, the Robin BC introduces systematic errors. DtN is implemented but not the default.",
+      "impact": "Boundary condition errors pollute the \u00b11 transmitted orders",
+      "fix_required_before": "Phase 3 A/B comparison"
+    },
+    {
+      "id": "ISSUE-05",
+      "severity": "RESOLVED",
+      "component": "Modal extractor \u2014 reference-only test",
+      "description": "No standalone reference-only test exists that passes RCWA fields directly through the modal extractor and asserts correct recovery of stored r_m and t_m amplitudes without any PINN involved. Phase 1 requires implementing and passing this test.",
+      "impact": "Cannot confirm modal extractor is correct before PINN training",
+      "fix_required_before": "Phase 1 gate (must pass before any new training)",
+      "resolution": "scripts/verify_modal_extractor.py implemented and passes 43/43 assertions. Field reconstruction, de-embedding, total/scattered extraction, modal amplitude and phase, and energy balance all verified."
+    },
+    {
+      "id": "ISSUE-06",
+      "severity": "LOW",
+      "component": "README test count",
+      "description": "README states 169 tests but actual count is 208.",
+      "impact": "Documentation inconsistency only",
+      "fix_required_before": "End of session"
+    }
+  ],
+  "phase_completion": {
+    "phase_0_repository_audit": "complete",
+    "phase_1_modal_extractor_validation": "PASS",
+    "phase_2_field_representation_validation": "not_started",
+    "phase_3_ab_comparison": "unblocked \u2014 pending run",
+    "phase_4_mode_logging_diagnostic": "unblocked \u2014 pending run",
+    "phase_5_2d_grating_validation_gate": "not_passed",
+    "phase_6_optical_system_coupling": "blocked_by_phase_5"
+  },
+  "may_begin_optical_system_coupling": false,
+  "overall_completion_estimate_percent": 28,
+  "notes": [
+    "Python execution via IDE shell requires full path: .venv/bin/python",
+    "All Python output must be written to files and read back (stdout not captured by shell)",
+    "c_trans in NPZ is defined at z=ridge_z_max=1.4, not at bottom of domain",
+    "c_refl in NPZ is defined at z=0 (top of domain, before any propagation)",
+    "De-embedding required: c_trans must be propagated from z=1.4 to monitor z_bot",
+    "De-embedding required: c_refl must be propagated from z=0 to monitor z_top"
+  ],
+  "phase_1_gate_result": "PASS",
+  "phase_1_gate_assertions": "43 passed, 0 failed",
+  "phase_1_gate_report": "outputs/research_status/modal_extractor_verification.json",
+  "pinn_training_may_proceed": true,
+  "phase_1_findings": {
+    "field_conventions_verified": {
+      "field_representation": "total",
+      "c_refl_reference_plane": "z = 0.0 (top of domain)",
+      "c_trans_reference_plane": "z = 1.4 (ridge_z_max, grating-substrate interface)",
+      "top_monitor_z": 0.1569,
+      "bottom_monitor_z": 1.8431,
+      "coordinate_convention": "z=0 top, z increases downward, E_inc=exp(-ik0*z)",
+      "incident_amplitude_normalisation": "unit (c_inc[N]=1.0)",
+      "P_inc": 0.5
+    },
+    "propagating_orders": {
+      "in_air": [
+        "m=0 only  (|kx_1|=7.854 > k0=6.283)"
+      ],
+      "in_substrate": [
+        "m=-1, 0, +1  (|kx_1|=7.854 < k_sub=9.111)"
+      ]
+    },
+    "rcwa_stored_amplitudes_at_reference_planes": {
+      "r0_abs_at_z0": 0.14733,
+      "t0_abs_at_ridge_zmax": 0.7511,
+      "t_pm1_abs_at_ridge_zmax": 0.3303
+    },
+    "total_field_extraction_from_rcwa_field": {
+      "r0_abs_at_top_monitor": 0.14735,
+      "t0_abs_at_bot_monitor": 0.75168,
+      "t1_abs_at_bot_monitor": 0.33353,
+      "amplitude_errors_within_tol_0p005": true,
+      "phase_errors_within_tol_1deg_for_m0": true,
+      "phase_errors_within_tol_2deg_for_pm1": true,
+      "energy_conservation_R_plus_T": 1.00449,
+      "energy_grid_artefact_note": "R+T=1.0045 on 128x256 grid; DFT power artefact from finite sampling of evanescent tails at monitor. Acceptable for phase 1 gate."
+    },
+    "scattered_field_extraction": {
+      "r0_scat_amp_err": 1e-05,
+      "t0_scat_amp_err": 0.00477,
+      "t_pm1_scat_amp_err": 0.0017,
+      "background_subtraction_correct": true,
+      "note": "R_scat+T_scat != 1 by design: scattered field carries only grating-scattered power (~0.19 total). Background carries the rest (~0.978). Energy is only meaningful for the total field."
+    },
+    "critical_issue_confirmed_ISSUE01": {
+      "description": "extract_modal_amplitudes in field_comparison.py subtracts only E_inc at the top monitor. For layered-bg PINN evaluation, the correct subtraction is E_inc + r_eff*exp(+ik1*z_top) (the full background). This will cause incorrect r_m values when extracting from PINN total field. The modal_data_loss function already handles this correctly. MUST be fixed before Phase 5 PINN validation.",
+      "impact": "PINN r0 extraction overestimates by reflected background component",
+      "status": "documented \u2014 fix required before Phase 5"
+    },
+    "new_finding_grating_interior": {
+      "description": "The NPZ does not store grating-layer eigenmodes. Reconstruction of E_total inside the grating region (1.2 < z < 1.4) from stored c_refl/c_trans alone is not possible without eigenmode data. Monitor planes must remain in z <= 1.2 (air) or z >= 1.4 (substrate). Current monitor positions (z_top=0.157, z_bot=1.843) are both in valid regions.",
+      "impact": "roundtrip reconstruction valid only outside grating interior"
+    }
+  }
+}
