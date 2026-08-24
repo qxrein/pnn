@@ -1,278 +1,291 @@
-# PINN Optics — 2D Grating Helmholtz PINN Prototype
+# PINN Optics — 2D Maxwell PINN for Grating Scattering
 
-**Research project:** *Learning the Electromagnetic-to-Optical-System Transfer Function with Physics-Informed Neural Networks*
+A research codebase implementing Physics-Informed Neural Networks (PINNs) for 2D frequency-domain TE Maxwell scattering from a binary dielectric diffraction grating. The codebase has progressed through scalar Helmholtz → first-order Maxwell → domain-decomposition → layered-background scattered-field formulations.
 
-This repository contains the **first milestone**: a proof-of-concept Physics-Informed Neural Network (PINN) that solves 2D frequency-domain electromagnetic scattering from a binary dielectric diffraction grating using a **scalar Helmholtz formulation**.
+> **Status:** Research prototype with validated RCWA reference generator. Not a production EM solver.
 
-> **Important:** This is a first 2D scalar Helmholtz PINN research prototype. It is **not** a production electromagnetic solver and **not** yet a complete vector Maxwell PINN. Physical validation requires comparison against an independent reference solver (RCWA, FDTD, FEM, etc.).
+## Coordinate convention
 
----
+| Symbol | Meaning |
+|--------|---------|
+| `z = 0` | Top boundary (incident) |
+| `z` increases | Downward |
+| `exp(-ik₀z)` | Incident wave (normal incidence) |
+| `xbar = k₀x`, `zbar = k₀z` | Nondimensional PDE coordinates |
 
-## Research objective
-
-Build and validate a modular PINN framework for grating scattering before extending to:
-
-1. Full-vector Maxwell equations in 2D/3D
-2. Import and comparison against industry EM solver reference data
-3. Learning an electromagnetic-to-optical-system transfer function
-4. Inverse design and optimization
-
----
-
-## Physical problem
-
-Time-harmonic scalar field \(E(x,z)\) satisfies the 2D Helmholtz equation:
-
-\[
-\frac{\partial^2 E}{\partial x^2} + \frac{\partial^2 E}{\partial z^2} + k_0^2 \,\varepsilon_r(x,z)\, E = 0
-\]
-
-where \(k_0 = 2\pi/\lambda\) and \(\varepsilon_r(x,z)\) is the piecewise-constant relative permittivity of a binary grating (air / ridge / substrate).
-
-The complex field is represented as two real network outputs: `E_real`, `E_imag`.
-
-### Coordinate convention
-
-| Axis | Range | Meaning |
-|------|-------|---------|
-| **x** | `[0, period]` | Periodic horizontal direction (one grating cell) |
-| **z** | `[0, domain_height]` | Vertical direction; **z = 0 is top** (incident boundary), **z increases downward** |
-
-### Boundary conditions (prototype)
-
-| Boundary | Treatment |
-|----------|-----------|
-| Left / right (x) | Periodic: \(E(0,z) = E(\Lambda,z)\) |
-| Top (z = 0) | Soft Dirichlet: \(E \approx e^{-ik_0 z}\) (normal incidence, downward propagation) |
-| Bottom | Approximate outgoing-wave soft target (documented approximation, not rigorous ABC) |
-
-### Known limitations
-
-- Scalar TE/TM reduction — not full vector Maxwell
-- Absorbing boundaries are approximate
-- Sharp εᵣ discontinuities can impede PINN convergence; interior points exclude a margin around interfaces by default
-- Results are **not physically validated** until reference-solver comparison is performed
-- MPS (Apple Metal) uses float32 automatically for compatibility
-
----
-
-## Folder structure
+## Architecture overview
 
 ```
-pinn_optics/
-├── README.md
-├── requirements.txt
-├── configs/default.yaml
-├── src/
-│   ├── config.py           # Dataclasses + YAML loading
-│   ├── geometry.py         # εᵣ(x,z) and coordinate normalization
-│   ├── sampling.py         # Collocation point sampling (uniform / Sobol)
-│   ├── model.py            # MLP field network
-│   ├── derivatives.py      # Autograd spatial derivatives
-│   ├── physics.py          # Helmholtz residual
-│   ├── boundary_conditions.py
-│   ├── losses.py           # Composite loss
-│   ├── train.py            # Training loop
-│   ├── evaluate.py         # Grid evaluation + metrics
-│   ├── visualization.py    # Matplotlib figures
-│   ├── reference_data.py   # External solver data import (placeholder workflow)
-│   └── utils.py            # Device (CPU/CUDA/MPS), seeding
-├── scripts/
-│   ├── train_pinn.py
-│   ├── evaluate_pinn.py
-│   └── plot_results.py
-├── tests/
-└── outputs/
-```
+src/
+  config.py              — PhysicsConfig, load_config
+  geometry.py            — epsilon_r, ridge masking
+  model.py               — base MLP, Fourier features, SIREN
+  physics.py             — Helmholtz PDE residual
+  maxwell_1d.py          — 1D TMM/Maxwell PINN (validated to 0.017%)
+  domain_decomp.py       — domain decomposition base
+  maxwell_2d.py          — 2D Maxwell MLP
+  maxwell_2d_dd.py       — 2D Maxwell DD (per-subdomain)
+  maxwell_2d_nondim.py   — 2D Maxwell DD in nondim coords (primary)
+  maxwell_feature_variants.py — feature ablation variants
+  maxwell_layered_bg.py  — layered-background scattered-field formulation
+  maxwell_diagnostics.py — residual maps, diffraction efficiencies
+  maxwell_benchmarks_2d.py — staged 2D benchmark cases
+  field_comparison.py    — dual total/scattered field comparison (NEW)
+  benchmarks.py          — 1D analytical benchmarks
+  reference_data.py      — RCWA NPZ load/interpolate/compare
 
----
+scripts/
+  generate_reference.py  — RCWA reference field generator (fixed _star)
+  audit_maxwell_2d.py    — comprehensive 2D audit
+  train_lbg.py           — layered-background vs free-space ablation
+  ablation_features.py   — feature-frequency ablation
+  train_maxwell_dd.py    — staged 2D training
+
+tests/
+  test_rcwa.py           — 21 RCWA correctness tests (star product, energy, field)
+  test_field_comparison.py — dual comparison + modal extraction tests
+  test_layered_bg.py     — layered background formulation tests
+  test_maxwell_2d_nondim.py — nondim PDE and chain-rule tests
+  ... (14 test files total, 169 tests)
+```
 
 ## Installation
 
 ```bash
-cd pinn_optics
 python3 -m venv .venv
-source .venv/bin/activate        # macOS / Linux
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Requires **Python 3.10+**, **PyTorch 2.0+** (with MPS support on Apple Silicon).
+Requires Python 3.10+, PyTorch 2.0+. On macOS Apple Silicon, MPS (float32) is used automatically.
 
 ---
 
-## Training
+## RCWA reference generator
+
+The reference field is generated by Fourier Modal Method (FMM) with Redheffer S-matrix cascading.
 
 ```bash
-python scripts/train_pinn.py --config configs/default.yaml
-```
-
-Quick smoke test (50 epochs, smaller network):
-
-```bash
-python scripts/train_pinn.py --config configs/default.yaml --smoke
-```
-
-Outputs:
-- `outputs/checkpoints/best_model.pt`
-- `outputs/training_history.csv`
-- `outputs/run_config.yaml`
-
-### Device selection
-
-Set in `configs/default.yaml`:
-
-```yaml
-training:
-  device: auto   # auto | cpu | cuda | mps
-```
-
-`auto` selects CUDA → MPS → CPU. On macOS Apple Silicon, **MPS (Metal)** is used automatically.
-
----
-
-## Evaluation
-
-```bash
-python scripts/evaluate_pinn.py \
-  --config configs/default.yaml \
-  --checkpoint outputs/checkpoints/best_model.pt
-```
-
-Outputs:
-- `outputs/results.npz` — x, z, E_real, E_imag, |E|, |E|², phase
-- `outputs/metrics.json` — PDE MSE, periodic BC error, etc.
-
----
-
-## Figures
-
-```bash
-python scripts/plot_results.py \
-  --results outputs/results.npz \
-  --checkpoint outputs/checkpoints/best_model.pt \
-  --history outputs/training_history.csv
-```
-
-Generates publication-quality PNG (600 dpi) and PDF figures in `outputs/figures/`.
-
----
-
-## Independent Reference Validation
-
-Once you have field data from an external electromagnetic solver (e.g., RCWA via S4, FDTD via MEEP, or FEM via COMSOL), you can run a quantitative comparison against the trained PINN.
-
-> **Important:** No fake or synthetic reference data are generated automatically.
-> The comparison is scientifically meaningful only when the reference originates
-> from an independent, validated solver.
-
-### Expected NPZ format
-
-Export your solver's field data as a NumPy NPZ file with **exactly** these arrays:
-
-| Key | Shape | Description |
-|-----|-------|-------------|
-| `x` | `(Nx,)` | 1-D horizontal coordinate array |
-| `z` | `(Nz,)` | 1-D vertical coordinate array |
-| `E_real` | `(Nz, Nx)` | Real part of the complex field |
-| `E_imag` | `(Nz, Nx)` | Imaginary part of the complex field |
-
-Field indexing convention:
-
-```
-E(z_index, x_index) = E_real[z_index, x_index] + 1j * E_imag[z_index, x_index]
-```
-
-- The **first** field dimension corresponds to **z** (rows).
-- The **second** field dimension corresponds to **x** (columns).
-- Coordinate arrays must be finite, 1-D, and strictly monotonic (increasing or decreasing).
-- Decreasing coordinates are normalised to increasing order internally; field axes are reversed consistently.
-
-Create the file from Python:
-
-```python
-import numpy as np
-np.savez("reference_grating.npz",
-         x=x_array,       # shape (Nx,)
-         z=z_array,       # shape (Nz,)
-         E_real=E_real,   # shape (Nz, Nx)
-         E_imag=E_imag)   # shape (Nz, Nx)
-```
-
-### Running reference validation
-
-```bash
-python scripts/evaluate_pinn.py \
+# period = 1λ (default geometry)
+python scripts/generate_reference.py \
     --config configs/default.yaml \
-    --checkpoint outputs/checkpoints/best_model.pt \
-    --reference path/to/reference.npz
+    --output outputs/reference_grating.npz \
+    --n-harmonics 25 \
+    --convergence-check
+
+# period = 0.8λ (non-Rayleigh primary test case)
+python scripts/generate_reference.py \
+    --config configs/default.yaml \
+    --output outputs/reference_lambda_0p8.npz \
+    --n-harmonics 75 \
+    --period 0.8
 ```
 
-If `--reference` is omitted, reference validation is skipped and a note is printed. If the specified file does not exist, the following message is printed and evaluation completes normally (exit code 0):
+The NPZ contains the **total field** (`field_representation = "total"`) plus:
+
+| Key | Description |
+|-----|-------------|
+| `E_real`, `E_imag` | Total field (Nz, Nx) |
+| `c_refl` | Complex reflection amplitudes per order |
+| `c_trans` | Complex transmission amplitudes per order |
+| `R_m`, `T_m` | Modal power efficiencies |
+| `R_total`, `T_total` | R+T = 1.000000 (energy conserved) |
+
+### Bug fixed (critical)
+
+The previous `_star` (Redheffer star product) had a wrong formula that produced **zero reflection amplitudes** for all configurations. The reference contained only `E_inc = exp(-ik₀z)`, making all PINN-vs-RCWA comparisons meaningless.
+
+**Root cause:** The formula used `M = (I - E·D)⁻¹` and computed `S[0,0] = A + B·M·E·C`. For a propagation matrix with `C = 0`, this gave `S[0,0] = A` (missing the transmission factor). The `S[1,0]` block was identically zero.
+
+**Correct formula** (`M = (I - B·G)⁻¹`, where `B = Sa[0,1]`, `G = Sb[1,0]`):
 
 ```
-No reference file found. Skipping reference validation.
-Provide an NPZ file containing x, z, E_real, and E_imag.
+S[0,0] = E · M · A
+S[0,1] = F + E · M · B · H
+S[1,0] = C + D · G · M · A
+S[1,1] = D · (G · M · B + I) · H
 ```
 
-### Output files
-
-| File | Description |
-|------|-------------|
-| `outputs/figures/reference_metrics.json` | Four comparison metrics |
-| `outputs/figures/reference_comparison.png` | Three-panel figure (600 dpi) |
-| `outputs/figures/reference_comparison.pdf` | Vector figure |
-
-### Reported metrics
-
-| Metric | Description |
-|--------|-------------|
-| `relative_l2_error_real` | Relative L2 error of Re{E} |
-| `relative_l2_error_imag` | Relative L2 error of Im{E} |
-| `relative_l2_error_magnitude` | Relative L2 error of \|E\| |
-| `maximum_absolute_error` | Max pointwise \|PINN_mag − ref_mag\| |
-
-The reference field is interpolated onto the PINN evaluation grid before comparison. Only points where both fields are finite are included in the metrics.
-
-### Using the API directly
-
-```python
-from src.reference_data import run_comparison
-
-metrics = run_comparison(
-    reference_path="reference_grating.npz",
-    pinn_x=pinn_x_1d,           # shape (Nx,)
-    pinn_z=pinn_z_1d,           # shape (Nz,)
-    pinn_E_real=pinn_E_real,    # shape (Nz, Nx)
-    pinn_E_imag=pinn_E_imag,    # shape (Nz, Nx)
-    output_dir="outputs/figures",
-    save_figure=True,
-)
-if metrics is not None:
-    print(metrics["relative_l2_error_magnitude"])
-```
-
-Enable supervised data loss during training by providing reference samples and setting `loss_weights.data > 0` in `configs/default.yaml`.
+Verified: identity star S = S, associativity, energy conservation R+T=1.000000.
 
 ---
 
-## Running tests
+## Field formulations
+
+### Free-space scattered field
+```
+E_total = E_inc + E_scat
+Source:  (ε_r - 1) · E_inc    (nonzero in substrate: (ε_sub - 1) ≈ 1.1)
+```
+
+### Layered-background scattered field (primary)
+```
+E_total = E_bg + E_scat
+E_bg    = Fresnel flat-interface solution (incident + reflected + transmitted)
+Source:  (ε_r - ε_bg) · E_bg  (nonzero ONLY inside the ridge)
+```
+
+The layered-background source is zero in substrate and air, concentrated entirely inside the grating ridge. This removes the large substrate source term that drove high substrate PDE residuals in the free-space formulation.
+
+---
+
+## Dual field comparison (`src/field_comparison.py`)
+
+Since the PINN predicts **scattered** fields and the RCWA provides **total** fields, all comparisons use explicit representation modes:
+
+### `compare_fields`
+```python
+from src.field_comparison import compare_fields, extract_modal_amplitudes
+
+result = compare_fields(
+    pinn_E_scat_r, pinn_E_scat_i,   # PINN scattered output
+    rcwa_E_total_r, rcwa_E_total_i,  # RCWA total field
+    z_grid, physics,
+    formulation="layered_bg",        # or "free_space"
+)
+
+# Metrics in both representations:
+result["total/complex_l2"]       # compare E_total_pinn vs E_total_rcwa
+result["total/phase_rmse_deg"]
+result["scattered/complex_l2"]   # compare E_scat_pinn vs E_scat_rcwa
+result["scattered/phase_rmse_deg"]
+
+# Reconstructed fields:
+result["pinn_E_total_r"]         # E_bg + E_scat_pinn
+result["rcwa_E_scat_r"]          # E_total_rcwa - E_bg
+result["field_representation_pinn"]  # "scattered"
+result["field_representation_rcwa"]  # "total"
+```
+
+### `extract_modal_amplitudes`
+```python
+E_total_pinn = result["pinn_E_total_r"] + 1j * result["pinn_E_total_i"]
+modal = extract_modal_amplitudes(E_total_pinn, x1d, z1d, physics, n_orders=5)
+
+modal["r0_complex"]     # complex r₀ amplitude
+modal["t0_complex"]     # complex t₀ amplitude
+modal["R_m"]            # modal reflection efficiencies
+modal["T_m"]            # modal transmission efficiencies
+modal["energy_check"]   # R_total + T_total (should be ~1.0)
+```
+
+### `compare_modal_with_rcwa`
+```python
+from src.field_comparison import compare_modal_with_rcwa
+cmp = compare_modal_with_rcwa(modal, "outputs/reference_grating.npz", n_harmonics_center=25)
+# cmp["m=0"]["r_abs_err"]       — |r| error for m=0 order
+# cmp["m=0"]["r_phase_err_deg"] — phase error in degrees
+# cmp["summary"]["rcwa_energy_check"]  — 1.000000
+```
+
+---
+
+## Training (2D Maxwell, layered-background)
 
 ```bash
-pytest tests/ -v
+# Layered-background vs free-space ablation, λ=0.8 geometry
+python scripts/train_lbg.py \
+    --case lambda_0p8 \
+    --reference outputs/reference_lambda_0p8.npz \
+    --epochs 8000 \
+    --device cpu
+
+# Full grating
+python scripts/train_lbg.py \
+    --case grating \
+    --reference outputs/reference_grating.npz \
+    --epochs 8000
+```
+
+Report saved to `outputs/lbg/{tag}_lbg_report.json` with:
+- `free_space.dual_comparison.*` — total and scattered metrics
+- `layered_bg.dual_comparison.*` — total and scattered metrics  
+- `*.modal_pinn` — PINN-derived r_m, t_m, R_m, T_m
+- `*.modal_rcwa_vs_pinn` — amplitude/phase comparison vs RCWA
+
+### Feature ablation
+
+```bash
+python scripts/ablation_features.py \
+    --case lambda_0p8 --epochs 5000
+```
+
+Four variants: `normalized`, `global_k0`, `local_material_k`, `local_material_plus_grating_x`.
+
+### 2D audit
+
+```bash
+python scripts/audit_maxwell_2d.py \
+    --case lambda_0p8 \
+    --reference outputs/reference_lambda_0p8.npz \
+    --epochs 8000
 ```
 
 ---
 
-## Next research milestones
+## Tests
 
-1. **Reference validation** — RCWA/FDTD export pipeline and quantitative error metrics
-2. **Improved BCs** — UPML, DtN, or scattered-field formulation
-3. **Vector Maxwell PINN** — full \( \mathbf{E} \), \( \mathbf{H} \) coupling
-4. **Transfer function stage** — map EM response features → optical system metrics
-5. **Inverse design** — gradient-based grating optimization via PINN surrogate
+```bash
+pytest tests/ -v          # all 169 tests
+pytest tests/test_rcwa.py         # 21 RCWA star-product and energy tests
+pytest tests/test_field_comparison.py  # 18 dual comparison tests
+pytest tests/test_layered_bg.py   # 13 layered-background tests
+```
+
+### Key invariants tested
+
+| Test | Invariant |
+|------|-----------|
+| `test_rcwa.py::TestStarIdentity` | `I ★ S = S ★ I = S` |
+| `test_rcwa.py::TestStarPhysics` | `\|r\|² + \|t\|²·(n₂/n₁) = 1` |
+| `test_rcwa.py::TestRCWAEnergyConservation` | `R+T = 1.000000` (both periods) |
+| `test_rcwa.py::test_not_pure_incident_wave` | Field ≠ `exp(-ik₀z)` (old bug check) |
+| `test_field_comparison.py::test_perfect_scatter_gives_zero_total_error` | Perfect scatter → 0 total error |
+| `test_field_comparison.py::test_rcwa_energy_conservation` | Stored R+T = 1.0 |
 
 ---
 
-## License
+## Physics conventions
 
-Research prototype — adapt as needed for academic use.
+| Convention | Value |
+|-----------|-------|
+| Time dependence | `exp(+iωt)` suppressed |
+| Incident wave | `E_inc(z) = exp(-ik₀z)` |
+| Forward H̃_x | `H̃_x = +n·E` for forward wave |
+| PDE coordinates | `xbar = k₀x`, `zbar = k₀z` (no k₀ in residuals) |
+| Primary test period | `Λ = 0.8λ` (non-Rayleigh: ±1 orders evanescent in air) |
+
+### Nondimensional Maxwell PDE (TE, scattered field)
+
+```
+(Ar)  ∂E_s_r/∂z̄  =  H_s_x_i
+(Ai)  ∂E_s_i/∂z̄  = -H_s_x_r
+(Br)  ∂E_s_r/∂x̄  = -H_s_z_i
+(Bi)  ∂E_s_i/∂x̄  =  H_s_z_r
+(Cr)  ∂H_s_x_r/∂z̄ - ∂H_s_z_r/∂x̄ =  ε_r·E_s_i + δε·E_bg_i
+(Ci)  ∂H_s_x_i/∂z̄ - ∂H_s_z_i/∂x̄ = -ε_r·E_s_r - δε·E_bg_r
+```
+
+where `δε = ε_r(x,z) - ε_bg(x,z)` is nonzero only inside the ridge.
+
+---
+
+## Current status
+
+| Item | Status |
+|------|--------|
+| Scalar Helmholtz PINN | ✓ implemented |
+| 1D Maxwell DD PINN | ✓ validated to 0.017% |
+| 2D Maxwell nondim DD | ✓ implemented, 131 tests pass |
+| RCWA reference generator | ✓ fixed (star product bug resolved) |
+| Reference NPZ (period=1λ) | ✓ R+T=1.000000, \|r₀\|=0.133 |
+| Reference NPZ (period=0.8λ) | ✓ R+T=1.000000, \|r₀\|=0.147 |
+| Layered-background formulation | ✓ source=0 in substrate verified |
+| Dual total/scattered comparison | ✓ implemented (`field_comparison.py`) |
+| Modal amplitude extraction | ✓ r_m, t_m, R_m, T_m |
+| RCWA vs PINN modal comparison | ✓ per-order amplitude and phase |
+| Full grating PINN validation | ⏳ pending training run with correct reference |
+
+### Next step
+
+Run `train_lbg.py` with the fixed reference to get the first **meaningful** PINN vs RCWA comparison. The previous complex_L2 ≈ 0.88 was comparing against `E_inc` only (the broken reference) and is not a valid metric.

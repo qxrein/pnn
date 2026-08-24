@@ -392,3 +392,171 @@ def test_normalised_diffraction_energy_tmm(physics):
     assert abs(diff["R0"] - r_analytic) < 0.01, (
         f"R0 = {diff['R0']:.4f}, analytic |r|^2 = {r_analytic:.4f}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Grating feature tests
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def physics_0p8():
+    """Lambda=0.8 geometry where G0/k0=1.25 (not a power-of-two multiple)."""
+    return PhysicsConfig(
+        wavelength=1.0, n_air=1.0, n_ridge=1.5, n_substrate=1.45,
+        period=0.8, ridge_width=0.4, ridge_height=0.2,
+        domain_height=2.0, ridge_base_fraction=0.6,
+    )
+
+
+def test_grating_feature_input_dimension(physics_0p8, dtype):
+    """in_dim = 4*L + 2*G where L=fourier_levels, G=grating_levels."""
+    L, G = 3, 2
+    net = Maxwell2DSubdomainMLP_ND(
+        physics_0p8.k0, 2, 16, L, period=physics_0p8.period, num_grating_levels=G
+    ).to(dtype=dtype)
+    expected_in = 4 * L + 2 * G
+    # Verify via the first linear layer weight shape
+    first_layer = list(net.net.children())[0]
+    assert first_layer.in_features == expected_in, (
+        f"Expected in_dim={expected_in}, got {first_layer.in_features}"
+    )
+
+
+def test_no_grating_features_unchanged_dimension(physics_0p8, dtype):
+    """With num_grating_levels=0, in_dim = 4*L (no change)."""
+    L = 4
+    net = Maxwell2DSubdomainMLP_ND(physics_0p8.k0, 2, 16, L).to(dtype=dtype)
+    first_layer = list(net.net.children())[0]
+    assert first_layer.in_features == 4 * L
+
+
+def test_grating_feature_output_shape(physics_0p8, dtype):
+    """Output is always (N, 6) regardless of grating levels."""
+    net = Maxwell2DSubdomainMLP_ND(
+        physics_0p8.k0, 2, 32, 3, period=physics_0p8.period, num_grating_levels=3
+    ).to(dtype=dtype)
+    x = torch.rand(12, dtype=dtype)
+    z = torch.rand(12, dtype=dtype)
+    out = net.forward(x, z)
+    assert out.shape == (12, 6)
+
+
+def test_grating_feature_gradient_flows(physics_0p8, dtype):
+    """Gradients must flow through grating-feature paths."""
+    net = Maxwell2DSubdomainMLP_ND(
+        physics_0p8.k0, 2, 16, 3, period=physics_0p8.period, num_grating_levels=2
+    ).to(dtype=dtype)
+    x = torch.rand(8, dtype=dtype, requires_grad=True)
+    z = torch.rand(8, dtype=dtype, requires_grad=True)
+    out = net.forward(x, z)
+    out.sum().backward()
+    assert x.grad is not None and x.grad.abs().sum() > 0
+    assert z.grad is not None and z.grad.abs().sum() > 0
+
+
+def test_grating_level_frequency_correct(physics_0p8, dtype):
+    """Grating feature level 1 has frequency G0 = 2*pi/period."""
+    import math
+    G0 = 2.0 * math.pi / physics_0p8.period
+    k0 = physics_0p8.k0
+    # G0/k0 = (2*pi/0.8) / (2*pi/1.0) = 1/0.8 = 1.25
+    G0_over_k0 = G0 / k0
+    assert abs(G0_over_k0 - 1.25) < 1e-10
+
+    # Build net and check that sin(G0*x) is in its feature set
+    net = Maxwell2DSubdomainMLP_ND(
+        k0, 2, 16, 2, period=physics_0p8.period, num_grating_levels=1
+    ).to(dtype=dtype)
+    # Pass x=period/4 so that sin(G0*x) = sin(pi/2) = 1
+    x_val = physics_0p8.period / 4.0
+    x = torch.tensor([x_val], dtype=dtype)
+    z = torch.tensor([0.1], dtype=dtype)
+    feats = net._fourier(x * k0, z * k0)
+    # The grating feature should be sin(G0_over_k0 * k0 * x) = sin(G0 * x) = sin(pi/2) = 1
+    expected_sin = math.sin(G0 * x_val)
+    expected_cos = math.cos(G0 * x_val)
+    # Grating features are at the end: indices 4*L and 4*L+1
+    L = 2
+    assert abs(float(feats[0, 4*L])   - expected_sin) < 1e-6, \
+        f"sin(G0*x) mismatch: {float(feats[0, 4*L]):.6f} vs {expected_sin:.6f}"
+    assert abs(float(feats[0, 4*L+1]) - expected_cos) < 1e-6, \
+        f"cos(G0*x) mismatch: {float(feats[0, 4*L+1]):.6f} vs {expected_cos:.6f}"
+
+
+def test_dd_nd_grating_model_construction(physics_0p8, dtype):
+    """Maxwell2DDD_ND with grating levels builds correctly for all three subnets."""
+    model = Maxwell2DDD_ND(
+        physics_0p8, hidden_layers=2, hidden_width=16,
+        num_fourier_levels=3, num_grating_levels=2
+    ).to(dtype=dtype)
+    # All three subnets must have the same in_dim
+    for name in ("net_air", "net_grat", "net_sub"):
+        net = getattr(model, name)
+        first = list(net.net.children())[0]
+        assert first.in_features == 4*3 + 2*2, \
+            f"{name} in_dim={first.in_features}, expected {4*3+2*2}"
+
+
+def test_pde_residual_with_grating_features(physics_0p8, dtype):
+    """LBG PDE residual is finite and gradient flows with ND+grating model."""
+    from src.maxwell_layered_bg import compute_background_coefficients, maxwell_2d_lbg_pde_residual
+    model = Maxwell2DDD_ND(
+        physics_0p8, 2, 16, 3, num_grating_levels=2
+    ).to(dtype=dtype)
+    coeff = compute_background_coefficients(physics_0p8)
+    x = torch.rand(16, dtype=dtype)
+    z = torch.rand(16, dtype=dtype) * physics_0p8.ridge_z_min
+    res = maxwell_2d_lbg_pde_residual(
+        model.net_air, x, z, physics_0p8, physics_0p8.n_air**2, coeff
+    )
+    assert len(res) == 6
+    loss = sum(torch.mean(r**2) for r in res) / 6
+    assert torch.isfinite(loss)
+    loss.backward()
+    has_grad = any(p.grad is not None and p.grad.abs().sum() > 0
+                   for p in model.net_air.parameters())
+    assert has_grad, "No gradient through LBG PDE with grating features"
+
+
+def test_grating_features_improve_representation(physics_0p8, dtype):
+    """Network with grating features can represent sin(G0*x) better than without.
+
+    A single linear layer without bias can represent sin(G0*x) exactly when
+    sin(G0*x) is in the feature set (coefficient = 1), but not when G0 falls
+    between power-of-two levels (best approximation requires mixing).
+    """
+    import math
+    G0 = 2.0 * math.pi / physics_0p8.period
+    k0 = physics_0p8.k0
+
+    x_np = torch.linspace(0, physics_0p8.period, 64, dtype=dtype)
+    z_np = torch.zeros(64, dtype=dtype)
+    target = torch.sin(G0 * x_np)  # the m=+1 Bloch mode x-dependence
+
+    # Net without grating features (L=3: sin(k0*x), sin(2k0*x), sin(4k0*x))
+    net_base = Maxwell2DSubdomainMLP_ND(k0, 1, 32, 3).to(dtype=dtype)
+    feats_base = net_base._fourier(x_np * k0, z_np * k0)  # (64, 12)
+
+    # Net with grating level 1 (adds sin(G0*x), cos(G0*x))
+    net_grat = Maxwell2DSubdomainMLP_ND(
+        k0, 1, 32, 3, period=physics_0p8.period, num_grating_levels=1
+    ).to(dtype=dtype)
+    feats_grat = net_grat._fourier(x_np * k0, z_np * k0)  # (64, 14)
+
+    # The grating net features must contain sin(G0*x) exactly
+    # (last two features: sin(G0*x), cos(G0*x))
+    sin_G0_x_in_features = feats_grat[:, -2]  # sin(G0*x) column
+    err_with_grating = float(torch.max(torch.abs(sin_G0_x_in_features - target)))
+    assert err_with_grating < 1e-6, \
+        f"sin(G0*x) not exact in grating features: max_err={err_with_grating:.2e}"
+
+    # Base features cannot represent sin(G0*x) as a single column
+    # (G0/k0=1.25, so no level has exactly this frequency)
+    min_err_base = float(min(
+        torch.max(torch.abs(feats_base[:, col] - target))
+        for col in range(feats_base.shape[1])
+    ))
+    # The grating net should be at least 10x more accurate in representing sin(G0*x)
+    assert err_with_grating < min_err_base / 10, \
+        (f"Grating features should better represent sin(G0*x): "
+         f"err_grating={err_with_grating:.2e}  err_base={min_err_base:.2e}")

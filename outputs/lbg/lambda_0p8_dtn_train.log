@@ -1,0 +1,231 @@
+
+=== Layered-background ablation  [lambda_0p8] ===
+  r_bg = 0.1486+0.1080j  |r|=0.1837
+  tau  = 0.2523-0.7764j  |t|=0.8163
+  Energy: R+T = 1.00000000
+  Contrast source region: ridge only  (delta_eps=0.1475)
+  Source in substrate: 0.0  (vs free-space: 1.1025)
+  Source map saved: /Users/rein/projects/rero/pinn_optics/outputs/lbg/lambda_0p8_source.png
+  Source by region: air=0.0000  grating=0.1204  sub=0.0000
+
+  === Free-space (original) ===
+    ep=  500  pde_air=4.50e-02  pde_grat=7.50e-02  pde_sub=1.16e-01  E_int=5.10e-05  top=1.95e-05  bot=8.74e-04
+    ep= 1000  pde_air=2.78e-02  pde_grat=4.47e-02  pde_sub=8.03e-02  E_int=1.96e-04  top=6.40e-06  bot=1.59e-05
+    ep= 1500  pde_air=2.07e-02  pde_grat=3.09e-02  pde_sub=6.05e-02  E_int=2.61e-04  top=8.92e-06  bot=6.46e-06
+    ep= 2000  pde_air=1.70e-02  pde_grat=2.42e-02  pde_sub=5.16e-02  E_int=7.17e-05  top=1.81e-06  bot=5.86e-06
+    ep= 2500  pde_air=1.44e-02  pde_grat=1.93e-02  pde_sub=4.49e-02  E_int=3.40e-05  top=1.49e-06  bot=4.90e-06
+    ep= 3000  pde_air=1.31e-02  pde_grat=1.55e-02  pde_sub=3.96e-02  E_int=8.47e-05  top=6.96e-06  bot=1.66e-06
+    ep= 3500  pde_air=1.19e-02  pde_grat=1.26e-02  pde_sub=3.47e-02  E_int=2.95e-05  top=8.39e-07  bot=2.97e-06
+    ep= 4000  pde_air=1.11e-02  pde_grat=1.10e-02  pde_sub=3.09e-02  E_int=3.86e-05  top=6.37e-07  bot=4.01e-05
+    ep= 4500  pde_air=1.06e-02  pde_grat=9.29e-03  pde_sub=2.79e-02  E_int=1.79e-05  top=5.54e-07  bot=1.93e-06
+    ep= 5000  pde_air=1.01e-02  pde_grat=8.28e-03  pde_sub=2.58e-02  E_int=2.61e-05  top=2.45e-05  bot=5.21e-06
+    ep= 5500  pde_air=9.72e-03  pde_grat=7.30e-03  pde_sub=2.34e-02  E_int=1.31e-06  top=4.24e-07  bot=6.16e-07
+    ep= 6000  pde_air=9.35e-03  pde_grat=6.46e-03  pde_sub=2.12e-02  E_int=6.56e-07  top=3.87e-07  bot=8.64e-06
+    ep= 6500  pde_air=8.92e-03  pde_grat=5.86e-03  pde_sub=1.95e-02  E_int=1.34e-06  top=4.78e-07  bot=5.84e-07
+    ep= 7000  pde_air=8.55e-03  pde_grat=5.43e-03  pde_sub=1.82e-02  E_int=6.17e-07  top=4.45e-07  bot=4.33e-07
+    ep= 7500  pde_air=8.25e-03  pde_grat=5.05e-03  pde_sub=1.70e-02  E_int=3.20e-07  top=2.70e-07  bot=3.69e-07
+    ep= 8000  pde_air=8.17e-03  pde_grat=4.96e-03  pde_sub=1.67e-02  E_int=3.15e-07  top=2.65e-07  bot=3.60e-07
+  best=3.0273e-02  epoch=8000
+
+  === Layered-background (DtN BC) ===
+  Modal DtN: 6 orders each side  (period=0.8000, ±1 in air: evanescent)
+    ep=  500  pde_air=4.69e-02  pde_grat=3.65e-02  pde_sub=6.11e-02  E_int=1.55e-04  top=4.94e-04  bot=2.40e-04
+    ep= 1000  pde_air=2.74e-02  pde_grat=2.03e-02  pde_sub=3.51e-02  E_int=3.63e-05  top=5.98e-04  bot=1.13e-05
+    ep= 1500  pde_air=1.97e-02  pde_grat=1.29e-02  pde_sub=2.22e-02  E_int=1.09e-04  top=9.14e-06  bot=1.82e-04
+    ep= 2000  pde_air=1.45e-02  pde_grat=8.86e-03  pde_sub=1.59e-02  E_int=1.46e-05  top=5.99e-06  bot=3.96e-04
+    ep= 2500  pde_air=1.09e-02  pde_grat=6.47e-03  pde_sub=1.25e-02  E_int=1.37e-04  top=1.47e-05  bot=2.68e-05
+    ep= 3000  pde_air=8.43e-03  pde_grat=4.68e-03  pde_sub=9.31e-03  E_int=4.07e-05  top=2.06e-06  bot=9.41e-05
+    ep= 3500  pde_air=6.55e-03  pde_grat=3.50e-03  pde_sub=7.16e-03  E_int=6.02e-06  top=2.74e-06  bot=1.67e-04
+    ep= 4000  pde_air=5.37e-03  pde_grat=2.84e-03  pde_sub=5.87e-03  E_int=1.43e-05  top=3.12e-05  bot=4.85e-05
+    ep= 4500  pde_air=4.54e-03  pde_grat=2.38e-03  pde_sub=5.02e-03  E_int=3.28e-06  top=1.64e-06  bot=2.12e-06
+    ep= 5000  pde_air=3.96e-03  pde_grat=2.04e-03  pde_sub=4.32e-03  E_int=1.29e-05  top=1.03e-06  bot=5.44e-06
+    ep= 5500  pde_air=3.53e-03  pde_grat=1.80e-03  pde_sub=3.80e-03  E_int=1.93e-06  top=9.94e-07  bot=1.96e-05
+    ep= 6000  pde_air=3.10e-03  pde_grat=1.60e-03  pde_sub=3.38e-03  E_int=1.45e-06  top=7.70e-07  bot=1.10e-06
+    ep= 6500  pde_air=2.78e-03  pde_grat=1.45e-03  pde_sub=3.11e-03  E_int=7.27e-07  top=4.70e-06  bot=4.74e-07
+    ep= 7000  pde_air=2.51e-03  pde_grat=1.31e-03  pde_sub=2.83e-03  E_int=3.29e-07  top=1.53e-06  bot=4.67e-07
+    ep= 7500  pde_air=2.35e-03  pde_grat=1.21e-03  pde_sub=2.63e-03  E_int=1.73e-07  top=3.91e-07  bot=3.29e-07
+    ep= 8000  pde_air=2.32e-03  pde_grat=1.19e-03  pde_sub=2.59e-03  E_int=1.71e-07  top=3.85e-07  bot=3.23e-07
+  best=6.4569e-03  epoch=8000
+
+  === Spectral boundary diagnostic (DtN) ===
+  TOP boundary (air, z=0):
+    m=+0  kz=6.2832  |E_m|=0.0202  |H_m|=0.0202  |H_DtN|=0.0202  res=0.000
+  BOTTOM boundary (substrate, z=2.000):
+    m=-1  kz=4.6172  |E_m|=0.0048  |H_m|=0.0035  |H_DtN|=0.0035  res=0.001
+    m=+0  kz=9.1106  |E_m|=0.0267  |H_m|=0.0387  |H_DtN|=0.0387  res=0.000
+    m=+1  kz=4.6172  |E_m|=0.0060  |H_m|=0.0044  |H_DtN|=0.0044  res=0.000
+  max_residual_propagating: top=0.0001  bot=0.0006
+
+======================================================================
+COMPARISON: free-space vs. layered-background
+======================================================================
+
+  [free_space]  best_total=3.0273e-02
+    pde_air=8.1726e-03  pde_grat=4.9619e-03  pde_sub=1.6677e-02
+    E_int=3.1454e-07  top=2.6490e-07  bot=3.6049e-07
+
+=================================================================
+FIELD REPRESENTATION AUDIT
+=================================================================
+  PINN formulation:  free_space
+  PINN outputs:      scattered
+  RCWA reference:    total
+
+  [TOTAL FIELD]
+    complex_l2                         : 0.4570
+    magnitude_l2                       : 0.2995
+    real_l2                            : 0.4198
+    imag_l2                            : 0.5069
+    phase_rmse_deg                     : 31.7904
+    global_phase_offset_deg            : 10.3356
+
+  [SCATTERED FIELD]
+    complex_l2                         : 0.6453
+    magnitude_l2                       : 0.5101
+    real_l2                            : 0.6778
+    imag_l2                            : 0.6169
+    phase_rmse_deg                     : 58.5593
+    global_phase_offset_deg            : -10.8631
+
+
+=================================================================
+FIELD REPRESENTATION AUDIT
+=================================================================
+  PINN formulation:  free_space
+  PINN outputs:      scattered
+  RCWA reference:    total
+
+  [TOTAL FIELD]
+    complex_l2                         : 0.4570
+    magnitude_l2                       : 0.2995
+    real_l2                            : 0.4198
+    imag_l2                            : 0.5069
+    phase_rmse_deg                     : 31.7904
+    global_phase_offset_deg            : 10.3356
+
+  [SCATTERED FIELD]
+    complex_l2                         : 0.6453
+    magnitude_l2                       : 0.5101
+    real_l2                            : 0.6778
+    imag_l2                            : 0.6169
+    phase_rmse_deg                     : 58.5593
+    global_phase_offset_deg            : -10.8631
+
+  [MODAL COMPARISON vs RCWA]
+    R_pinn_total                       : 0.1350
+    T_pinn_total                       : 0.3299
+    pinn_energy_check                  : 0.4649
+    R_rcwa_total                       : 0.0217
+    T_rcwa_total                       : 0.9783
+    rcwa_energy_check                  : 1.0000
+
+    m=-1:
+      r: pinn|0.0080|∠112.9°  rcwa|0.0008|∠28.0°  err|0.0073|  phase_err 84.9°
+      t: pinn|0.0126|∠8.8°  rcwa|0.3303|∠-6.6°  err|0.3177|  phase_err 15.3°
+      R: pinn=0.0000  rcwa=0.0000
+      T: pinn=0.0001  rcwa=0.0801
+    m=0:
+      r: pinn|0.3675|∠75.5°  rcwa|0.1473|∠5.4°  err|0.2201|  phase_err 70.1°
+      t: pinn|0.4769|∠16.3°  rcwa|0.7511|∠-168.8°  err|0.2742|  phase_err 174.9°
+      R: pinn=0.1350  rcwa=0.0217
+      T: pinn=0.3298  rcwa=0.8180
+    m=1:
+      r: pinn|0.0041|∠-118.2°  rcwa|0.0008|∠28.0°  err|0.0033|  phase_err 146.2°
+      t: pinn|0.0082|∠-179.1°  rcwa|0.3303|∠-6.6°  err|0.3220|  phase_err 172.5°
+      R: pinn=0.0000  rcwa=0.0000
+      T: pinn=0.0001  rcwa=0.0801
+=================================================================
+
+  [layered_bg]  best_total=6.4569e-03
+    pde_air=2.3183e-03  pde_grat=1.1915e-03  pde_sub=2.5926e-03
+    E_int=1.7053e-07  top=3.8536e-07  bot=3.2317e-07
+
+=================================================================
+FIELD REPRESENTATION AUDIT
+=================================================================
+  PINN formulation:  layered_bg
+  PINN outputs:      scattered
+  RCWA reference:    total
+
+  [TOTAL FIELD]
+    complex_l2                         : 0.3275
+    magnitude_l2                       : 0.2099
+    real_l2                            : 0.3108
+    imag_l2                            : 0.3505
+    phase_rmse_deg                     : 18.4602
+    global_phase_offset_deg            : -0.6516
+
+  [SCATTERED FIELD]
+    complex_l2                         : 1.0045
+    magnitude_l2                       : 0.9479
+    real_l2                            : 0.9923
+    imag_l2                            : 1.0192
+    phase_rmse_deg                     : 104.7416
+    global_phase_offset_deg            : -89.3396
+
+
+=================================================================
+FIELD REPRESENTATION AUDIT
+=================================================================
+  PINN formulation:  layered_bg
+  PINN outputs:      scattered
+  RCWA reference:    total
+
+  [TOTAL FIELD]
+    complex_l2                         : 0.3275
+    magnitude_l2                       : 0.2099
+    real_l2                            : 0.3108
+    imag_l2                            : 0.3505
+    phase_rmse_deg                     : 18.4602
+    global_phase_offset_deg            : -0.6516
+
+  [SCATTERED FIELD]
+    complex_l2                         : 1.0045
+    magnitude_l2                       : 0.9479
+    real_l2                            : 0.9923
+    imag_l2                            : 1.0192
+    phase_rmse_deg                     : 104.7416
+    global_phase_offset_deg            : -89.3396
+
+  [MODAL COMPARISON vs RCWA]
+    R_pinn_total                       : 0.0460
+    T_pinn_total                       : 0.9551
+    pinn_energy_check                  : 1.0012
+    R_rcwa_total                       : 0.0217
+    T_rcwa_total                       : 0.9783
+    rcwa_energy_check                  : 1.0000
+
+    m=-1:
+      r: pinn|0.0035|∠-154.8°  rcwa|0.0008|∠28.0°  err|0.0028|  phase_err 177.2°
+      t: pinn|0.0093|∠-79.3°  rcwa|0.3303|∠-6.6°  err|0.3210|  phase_err 72.7°
+      R: pinn=0.0000  rcwa=0.0000
+      T: pinn=0.0001  rcwa=0.0801
+    m=0:
+      r: pinn|0.2145|∠86.3°  rcwa|0.1473|∠5.4°  err|0.0672|  phase_err 80.8°
+      t: pinn|0.8116|∠-48.9°  rcwa|0.7511|∠-168.8°  err|0.0605|  phase_err 119.9°
+      R: pinn=0.0460  rcwa=0.0217
+      T: pinn=0.9551  rcwa=0.8180
+    m=1:
+      r: pinn|0.0044|∠-108.9°  rcwa|0.0008|∠28.0°  err|0.0036|  phase_err 136.8°
+      t: pinn|0.0012|∠-118.5°  rcwa|0.3303|∠-6.6°  err|0.3291|  phase_err 112.0°
+      R: pinn=0.0000  rcwa=0.0000
+      T: pinn=0.0000  rcwa=0.0801
+=================================================================
+
+Metric                                             free_space      layered_bg
+-----------------------------------------------------------------------------
+  total/complex_l2                                     0.4570          0.3275
+  total/magnitude_l2                                   0.2995          0.2099
+  total/phase_rmse_deg                                31.7904         18.4602
+  scattered/complex_l2                                 0.6453          1.0045
+  scattered/magnitude_l2                               0.5101          0.9479
+  scattered/phase_rmse_deg                            58.5593        104.7416
+  pde_air                                          8.1726e-03      2.3183e-03
+  pde_grat                                         4.9619e-03      1.1915e-03
+  pde_sub                                          1.6677e-02      2.5926e-03
+  pde/top                                          2.6490e-07      3.8536e-07
+  pde/bottom                                       3.6049e-07      3.2317e-07
+  modal_energy_check (R+T)                             0.4649          1.0012
+=============================================================================
+  Report: /Users/rein/projects/rero/pinn_optics/outputs/lbg/lambda_0p8_lbg_report.json
+  Figures: /Users/rein/projects/rero/pinn_optics/outputs/lbg

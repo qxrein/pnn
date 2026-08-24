@@ -85,6 +85,11 @@ class Maxwell2DSubdomainMLP_ND(nn.Module):
     physical oscillation frequency.  This is the key property that makes the
     1-D Maxwell benchmark work.
 
+    Optional grating features: sin(G0*x), cos(G0*x) where G0 = 2π/Λ.
+    For Λ=0.8λ, G0/k0=1.25 which falls between l=0 (k0) and l=1 (2k0).
+    Adding these features explicitly allows the network to represent ±1
+    diffraction orders.
+
     Outputs: [Er_scat, Ei_scat, Hr_x_scat, Hi_x_scat, Hr_z_scat, Hi_z_scat]
     """
 
@@ -94,12 +99,21 @@ class Maxwell2DSubdomainMLP_ND(nn.Module):
         hidden_layers: int = 4,
         hidden_width: int = 64,
         num_fourier_levels: int = 4,
+        period: float | None = None,
+        num_grating_levels: int = 0,
     ) -> None:
         super().__init__()
         self.k0 = k0
         self.num_fourier_levels = num_fourier_levels
+        self.period = period
+        self.num_grating_levels = num_grating_levels
 
+        # Base Fourier features: 4 per level (sin/cos in x and z)
         in_dim = 4 * num_fourier_levels
+        # Grating-periodic x features: 2 per level (sin/cos in x only)
+        if period is not None and num_grating_levels > 0:
+            in_dim += 2 * num_grating_levels
+
         layers: list[nn.Module] = [nn.Linear(in_dim, hidden_width), nn.Tanh()]
         for _ in range(hidden_layers - 1):
             layers += [nn.Linear(hidden_width, hidden_width), nn.Tanh()]
@@ -114,7 +128,13 @@ class Maxwell2DSubdomainMLP_ND(nn.Module):
                 nn.init.zeros_(m.bias)
 
     def _fourier(self, xbar: torch.Tensor, zbar: torch.Tensor) -> torch.Tensor:
-        """Fourier features on nondimensional coords xbar=k0*x, zbar=k0*z."""
+        """Fourier features on nondimensional coords xbar=k0*x, zbar=k0*z.
+
+        Base levels: sin/cos(2^l * xbar), sin/cos(2^l * zbar)
+        Grating levels: sin/cos(l_g * G0 * x) where G0 = 2*pi/Lambda
+          These allow the network to represent m=+-1, +-2, ... diffraction orders
+          even when G0 is not a power-of-two multiple of k0.
+        """
         parts = []
         for l in range(self.num_fourier_levels):
             s = float(2 ** l)
@@ -122,6 +142,13 @@ class Maxwell2DSubdomainMLP_ND(nn.Module):
                 torch.sin(s * xbar), torch.cos(s * xbar),
                 torch.sin(s * zbar), torch.cos(s * zbar),
             ]
+        if self.period is not None and self.num_grating_levels > 0:
+            G0_over_k0 = (2.0 * math.pi / self.period) / self.k0
+            for l_g in range(1, self.num_grating_levels + 1):
+                s = float(l_g) * G0_over_k0
+                parts += [
+                    torch.sin(s * xbar), torch.cos(s * xbar),
+                ]
         return torch.stack(parts, dim=-1)
 
     def forward_nd(self, xbar: torch.Tensor, zbar: torch.Tensor) -> torch.Tensor:
@@ -156,14 +183,19 @@ class Maxwell2DDD_ND(nn.Module):
         hidden_layers: int = 4,
         hidden_width: int = 64,
         num_fourier_levels: int = 4,
+        num_grating_levels: int = 0,
     ) -> None:
         super().__init__()
         self.physics = physics
         k0 = physics.k0
+        period = physics.period if num_grating_levels > 0 else None
         # All three subnets share the same k0 — same nondimensional coordinates
-        self.net_air  = Maxwell2DSubdomainMLP_ND(k0, hidden_layers, hidden_width, num_fourier_levels)
-        self.net_grat = Maxwell2DSubdomainMLP_ND(k0, hidden_layers, hidden_width, num_fourier_levels)
-        self.net_sub  = Maxwell2DSubdomainMLP_ND(k0, hidden_layers, hidden_width, num_fourier_levels)
+        self.net_air  = Maxwell2DSubdomainMLP_ND(k0, hidden_layers, hidden_width,
+                                                  num_fourier_levels, period, num_grating_levels)
+        self.net_grat = Maxwell2DSubdomainMLP_ND(k0, hidden_layers, hidden_width,
+                                                  num_fourier_levels, period, num_grating_levels)
+        self.net_sub  = Maxwell2DSubdomainMLP_ND(k0, hidden_layers, hidden_width,
+                                                  num_fourier_levels, period, num_grating_levels)
 
     def forward_E(self, x: torch.Tensor, z: torch.Tensor) -> torch.Tensor:
         """Return [Er_scat, Ei_scat] shape (N, 2), routed by z."""

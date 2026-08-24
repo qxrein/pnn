@@ -690,7 +690,7 @@ def main() -> int:
             from scripts.generate_reference import solve_rcwa
             ref_file = ROOT / "outputs/reference_lambda_0p8.npz"
             print(f"  Generating RCWA reference...")
-            x_r, z_r, Er_r, Ei_r = solve_rcwa(physics, N_harmonics=75)
+            x_r, z_r, Er_r, Ei_r, _amps_r = solve_rcwa(physics, N_harmonics=75)
             np.savez(ref_file, x=x_r, z=z_r, E_real=Er_r, E_imag=Ei_r)
             args.reference = str(ref_file)
             print(f"  Saved: {ref_file}")
@@ -706,7 +706,7 @@ def main() -> int:
         if args.gen_reference:
             from scripts.generate_reference import solve_rcwa
             ref_file = ROOT / "outputs/reference_lambda_1p5.npz"
-            x_r, z_r, Er_r, Ei_r = solve_rcwa(physics, N_harmonics=75)
+            x_r, z_r, Er_r, Ei_r, _amps_r = solve_rcwa(physics, N_harmonics=75)
             np.savez(ref_file, x=x_r, z=z_r, E_real=Er_r, E_imag=Ei_r)
             args.reference = str(ref_file)
     elif args.case == "energy_check":

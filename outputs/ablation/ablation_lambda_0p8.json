@@ -1,0 +1,122 @@
+{
+  "case": "lambda_0p8",
+  "args": {
+    "config": "configs/default.yaml",
+    "case": "lambda_0p8",
+    "reference": null,
+    "gen_reference": false,
+    "device": "cpu",
+    "epochs": 5000,
+    "hidden_layers": 4,
+    "hidden_width": 64,
+    "fourier_levels": 4,
+    "n_per_region": 1024,
+    "n_interface": 256,
+    "n_bc": 256,
+    "seed": 42,
+    "lr": 0.0005,
+    "w_pde": 1.0,
+    "w_E": 500.0,
+    "w_H": 500.0,
+    "w_top": 200.0,
+    "w_bot": 100.0,
+    "variants": [
+      "normalized",
+      "global_k0",
+      "local_material_k"
+    ],
+    "output_dir": "outputs/ablation"
+  },
+  "results": {
+    "normalized": {
+      "final_losses": {
+        "epoch": 5000,
+        "pde_air": 0.0028024658693738096,
+        "pde_grat": 0.07507446783097832,
+        "pde_sub": 0.04885193448043159,
+        "E_int": 7.442931870972643e-07,
+        "H_int": 6.884860381075414e-07,
+        "top": 1.2039310269349386e-06,
+        "bottom": 2.4573689692709412e-06,
+        "total": 0.1279317808957002
+      },
+      "ref_errors": {
+        "relative_l2_real": 0.5026294868893746,
+        "relative_l2_imag": 0.5031449456561959,
+        "relative_l2_magnitude": 0.3775173276262958,
+        "relative_complex_l2": 0.5028787529983418,
+        "relative_l2_phase_aligned": 0.49556409206858876,
+        "phase_rmse_deg": 37.15003743511953,
+        "global_phase_offset_deg": -5.345497991790845
+      },
+      "diffraction": {
+        "R0": 0.018412310215542134,
+        "T0": 0.5996406534875629,
+        "R_total": 0.018412310215542134,
+        "T_total": 0.5998168361472992,
+        "energy_check": 0.6182291463628413,
+        "P_inc": 0.5
+      }
+    },
+    "global_k0": {
+      "final_losses": {
+        "epoch": 5000,
+        "pde_air": 0.011484295275637643,
+        "pde_grat": 0.00902286629276361,
+        "pde_sub": 0.025515978215544226,
+        "E_int": 5.9416529890655e-07,
+        "H_int": 7.067032161152233e-07,
+        "top": 5.755888572482475e-07,
+        "bottom": 1.2981431118894097e-06,
+        "total": 0.04691850612409496
+      },
+      "ref_errors": {
+        "relative_l2_real": 0.4425783452344293,
+        "relative_l2_imag": 0.5951307975525241,
+        "relative_l2_magnitude": 0.349606214174416,
+        "relative_complex_l2": 0.5219278400251116,
+        "relative_l2_phase_aligned": 0.5175235841004895,
+        "phase_rmse_deg": 41.03587060146452,
+        "global_phase_offset_deg": -4.538730421512449
+      },
+      "diffraction": {
+        "R0": 0.16442819852304236,
+        "T0": 0.37850390116839594,
+        "R_total": 0.16442819852304236,
+        "T_total": 0.3790454706137255,
+        "energy_check": 0.5434736691367679,
+        "P_inc": 0.5
+      }
+    },
+    "local_material_k": {
+      "final_losses": {
+        "epoch": 5000,
+        "pde_air": 0.010185418095491084,
+        "pde_grat": 0.010393522440082112,
+        "pde_sub": 0.03637590505173096,
+        "E_int": 6.7834893075162e-07,
+        "H_int": 5.918847508906727e-07,
+        "top": 5.121247282656444e-07,
+        "bottom": 1.6659066180344159e-06,
+        "total": 0.05785897803558187
+      },
+      "ref_errors": {
+        "relative_l2_real": 0.4413993070433467,
+        "relative_l2_imag": 0.5822949346508509,
+        "relative_l2_magnitude": 0.36733447068318975,
+        "relative_complex_l2": 0.5143576021128305,
+        "relative_l2_phase_aligned": 0.5121399755040031,
+        "phase_rmse_deg": 40.62466835351005,
+        "global_phase_offset_deg": -3.1728666569052337
+      },
+      "diffraction": {
+        "R0": 0.1064960715320333,
+        "T0": 0.4364597863293634,
+        "R_total": 0.1064960715320333,
+        "T_total": 0.43665524688921137,
+        "energy_check": 0.5431513184212446,
+        "P_inc": 0.5
+      }
+    }
+  }
+}

@@ -538,7 +538,7 @@ def main() -> int:
         from scripts.generate_reference import solve_rcwa
         ref_file = ROOT / f"outputs/reference_{case.tag}.npz"
         print(f"\n  Generating RCWA reference → {ref_file}")
-        x_r, z_r, Er_r, Ei_r = solve_rcwa(case.physics, N_harmonics=75)
+        x_r, z_r, Er_r, Ei_r, _amps_r = solve_rcwa(case.physics, N_harmonics=75)
         np.savez(ref_file, x=x_r, z=z_r, E_real=Er_r, E_imag=Ei_r)
         ref_path = ref_file
         print(f"  Saved: {ref_path}")

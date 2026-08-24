@@ -115,16 +115,38 @@ def _s_propagate(kz: np.ndarray, h: float) -> np.ndarray:
 
 
 def _star(Sa: np.ndarray, Sb: np.ndarray) -> np.ndarray:
-    """Redheffer star product Sa ★ Sb."""
+    """Redheffer star product Sa ★ Sb.
+
+    Convention: [c_R+; c_L-] = S @ [c_L+; c_R-]
+    Blocks: Sa = [[A,B],[C,D]], Sb = [[E,F],[G,H]]
+
+    Derivation:
+        c_M+ = A c_L+ + B c_M-          (Sa forward)
+        c_L- = C c_L+ + D c_M-          (Sa backward)
+        c_R+ = E c_M+ + F c_R-          (Sb forward)
+        c_M- = G c_M+ + H c_R-          (Sb backward)
+
+    Eliminating c_M+ and c_M- via M = (I - B G)^{-1}:
+        c_M+ = M A c_L+ + M B H c_R-
+        c_M- = G M A c_L+ + (G M B + I) H c_R-
+
+    Combined S-matrix:
+        S[0,0] = E M A
+        S[0,1] = F + E M B H
+        S[1,0] = C + D G M A
+        S[1,1] = D (G M B + I) H
+
+    This reduces to identity when Sa = I or Sb = I, and satisfies
+    energy conservation for lossless media.
+    """
     N = Sa.shape[0] // 2
     A, B, C, D = Sa[:N, :N], Sa[:N, N:], Sa[N:, :N], Sa[N:, N:]
     E_, F, G, H = Sb[:N, :N], Sb[:N, N:], Sb[N:, :N], Sb[N:, N:]
     I = np.eye(N, dtype=complex)
-    X = np.linalg.inv(I - E_ @ D)
-    Y = np.linalg.inv(I - D @ E_)
+    M = np.linalg.inv(I - B @ G)   # (I - Sa[0,1] @ Sb[1,0])^{-1}
     return np.block([
-        [A + B @ X @ E_ @ C,   B @ X @ F  ],
-        [G @ Y @ C,             H + G @ Y @ D @ F],
+        [E_ @ M @ A,               F + E_ @ M @ B @ H],
+        [C + D @ G @ M @ A,        D @ (G @ M @ B + I) @ H],
     ])
 
 
@@ -160,10 +182,18 @@ def solve_rcwa(
     physics: PhysicsConfig,
     N_harmonics: int = 25,
     Nfine: int = 2048,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, dict]:
     """RCWA + FMM solution for the binary grating.
 
-    Returns x (Nx,), z (Nz,), E_real (Nz, Nx), E_imag (Nz, Nx).
+    Returns x (Nx,), z (Nz,), E_real (Nz, Nx), E_imag (Nz, Nx), amplitudes dict.
+
+    amplitudes dict contains:
+        c_refl  : (n,) complex reflection amplitudes at z=0
+        c_trans : (n,) complex transmission amplitudes into substrate
+        kz_air  : (n,) z-wavenumbers in air
+        kz_sub  : (n,) z-wavenumbers in substrate
+        kx      : (n,) x-wavenumbers (Bloch orders)
+        R_total, T_total, R_m, T_m, energy_check
     """
     k0 = physics.k0
     N = N_harmonics
@@ -236,24 +266,57 @@ def solve_rcwa(
 
     E_field = np.zeros((Nz, Nx), dtype=complex)
 
+    # Backward-wave amplitudes are referenced at the BOTTOM of each region so
+    # that evanescent backward modes decay toward z=0 (upward) without overflow.
+    # c_bwd * exp(+i kz (z - z_ref_bot))  with  z < z_ref_bot  is well-behaved
+    # since Im(kz) <= 0 means exp(+Im(kz)*(z-z_ref_bot)) decays as z -> 0.
+
     for iz, zv in enumerate(z_arr):
         if zv <= z_g_bot:
-            zl = zv
-            fwd = c_fwd_air_top * np.exp(-1j * kz_air * zl)
-            bwd = c_bwd_air_top * np.exp(+1j * kz_air * zl)
+            zl_fwd = zv                  # distance from top (forward decay)
+            zl_bwd = zv - z_g_bot        # distance from bottom (≤ 0, bwd decay upward)
+            fwd = c_fwd_air_top * np.exp(-1j * kz_air * zl_fwd)
+            bwd = c_bwd_air_bot * np.exp(+1j * kz_air * zl_bwd)
             E_field[iz, :] = X_phase @ (fwd + bwd)
         elif zv <= z_g_top:
             zl = zv - z_g_bot
             fwd = c_fwd_grat_top * np.exp(-1j * gamma * zl)
-            bwd = c_bwd_grat_top * np.exp(+1j * gamma * zl)
+            bwd = c_bwd_grat_bot * np.exp(+1j * gamma * (zl - h_grat))
             E_field[iz, :] = X_phase @ (W @ (fwd + bwd))
         else:
             zl = zv - z_g_top
             fwd = c_fwd_sub_top * np.exp(-1j * kz_sub * zl)
-            bwd = c_bwd_sub_top * np.exp(+1j * kz_sub * zl)
-            E_field[iz, :] = X_phase @ (fwd + bwd)
+            # No backward wave in substrate (outgoing radiation condition)
+            E_field[iz, :] = X_phase @ fwd
 
-    return x, z_arr, np.real(E_field), np.imag(E_field)
+    # Energy conservation and amplitude summary
+    amplitudes = _compute_amplitudes_and_energy(
+        c_bwd_air_top, c_fwd_sub_top, kz_air, kz_sub, kx, N
+    )
+
+    return x, z_arr, np.real(E_field), np.imag(E_field), amplitudes
+
+
+def _compute_amplitudes_and_energy(
+    c_bwd_air_top, c_fwd_sub_top, kz_air, kz_sub, kx, N
+):
+    """Compute reflection/transmission amplitudes and energy balance."""
+    kz0_air = kz_air[N]
+    R_m = np.zeros(len(kx)); T_m = np.zeros(len(kx))
+    for m in range(len(kx)):
+        if kz_air[m].real > 1e-6:
+            R_m[m] = abs(c_bwd_air_top[m])**2 * kz_air[m].real / kz0_air.real
+        if kz_sub[m].real > 1e-6:
+            T_m[m] = abs(c_fwd_sub_top[m])**2 * kz_sub[m].real / kz0_air.real
+    return {
+        "c_refl":  c_bwd_air_top,
+        "c_trans": c_fwd_sub_top,
+        "kz_air": kz_air, "kz_sub": kz_sub, "kx": kx,
+        "R_m": R_m, "T_m": T_m,
+        "R_total": float(R_m.sum()),
+        "T_total": float(T_m.sum()),
+        "energy_check": float(R_m.sum() + T_m.sum()),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -293,15 +356,20 @@ def main() -> None:
 
     N = args.n_harmonics
     print(f"RCWA  N_harmonics={N}  (total orders={2*N+1})")
-    x, z, E_real, E_imag = solve_rcwa(config.physics, N_harmonics=N)
+    x, z, E_real, E_imag, amps = solve_rcwa(config.physics, N_harmonics=N)
     mag = np.sqrt(E_real**2 + E_imag**2)
     print(f"  |E| range : [{mag.min():.4f}, {mag.max():.4f}]")
     print(f"  |E| mean  : {mag.mean():.4f}")
+    print(f"  |r_0|     : {abs(amps['c_refl'][args.n_harmonics]):.6f}  (m=0 reflection amplitude)")
+    print(f"  |t_0|     : {abs(amps['c_trans'][args.n_harmonics]):.6f}  (m=0 transmission amplitude)")
+    print(f"  R_total   : {amps['R_total']:.6f}")
+    print(f"  T_total   : {amps['T_total']:.6f}")
+    print(f"  R+T       : {amps['energy_check']:.6f}  (should be 1.0)")
 
     if args.convergence_check:
         N2 = N + 10
         print(f"Convergence check  N_harmonics={N2} ...")
-        _, _, Er2, Ei2 = solve_rcwa(config.physics, N_harmonics=N2)
+        _, _, Er2, Ei2, _ = solve_rcwa(config.physics, N_harmonics=N2)
         mag2 = np.sqrt(Er2**2 + Ei2**2)
         rel = np.linalg.norm(mag - mag2) / (np.linalg.norm(mag2) + 1e-30)
         print(f"  Relative |E| diff N={N} vs N={N2}: {rel:.2e}")
@@ -310,7 +378,20 @@ def main() -> None:
         else:
             print("  Converged (< 2%).")
 
-    np.savez(output_path, x=x, z=z, E_real=E_real, E_imag=E_imag)
+    np.savez(output_path, x=x, z=z, E_real=E_real, E_imag=E_imag,
+             field_representation="total",
+             wavelength=config.physics.wavelength,
+             period=config.physics.period,
+             n_air=config.physics.n_air,
+             n_ridge=config.physics.n_ridge,
+             n_substrate=config.physics.n_substrate,
+             k0=config.physics.k0,
+             domain_height=config.physics.domain_height,
+             coordinate_convention="z=0 top, z increases downward, E_inc=exp(-ik0*z)",
+             c_refl=amps["c_refl"], c_trans=amps["c_trans"],
+             kz_air=amps["kz_air"], kz_sub=amps["kz_sub"], kx=amps["kx"],
+             R_m=amps["R_m"], T_m=amps["T_m"],
+             R_total=amps["R_total"], T_total=amps["T_total"])
     print(f"Saved → {output_path}")
     print(f"  x: {x.shape}  z: {z.shape}  E_real: {E_real.shape}")
 
