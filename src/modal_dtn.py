@@ -127,7 +127,7 @@ def _kz_outgoing_upward(kx_m: np.ndarray, n: float, k0: float) -> np.ndarray:
 # ---------------------------------------------------------------------------
 
 
-def modal_dtn_loss(
+def modal_dtn_pointwise(
     subnet,
     x_pts: torch.Tensor,
     z_val: float,
@@ -135,10 +135,8 @@ def modal_dtn_loss(
     boundary: str,              # "top" or "bottom"
     n_medium: float,
     n_dtn_orders: int = 10,
-) -> torch.Tensor:
-    """DtN boundary loss for the scattered field at a horizontal boundary.
-
-    Computes pointwise DtN target H̃_x^DtN(x) and returns MSE vs PINN H̃_x.
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Pointwise DtN residuals (H̃_x - H̃_x^DtN) on the uniform DFT grid.
 
     Parameters
     ----------
@@ -146,7 +144,7 @@ def modal_dtn_loss(
         The PINN subnet (net_air for top, net_sub for bottom).
     x_pts
         Tensor of x points, shape (N,).  Need NOT be uniform — DFT uses
-        the ordering to reconstruct phases, but we sum over all m.
+        the count to size the uniform reconstruction grid.
     z_val
         Physical z coordinate of the boundary.
     physics
@@ -161,8 +159,8 @@ def modal_dtn_loss(
 
     Returns
     -------
-    torch.Tensor (scalar)
-        Mean squared boundary residual summed over all DtN orders.
+    dHr, dHi : torch.Tensor
+        Real and imaginary pointwise residuals, shape ``(N_x,)``.
     """
     k0     = physics.k0
     period = physics.period
@@ -203,7 +201,6 @@ def modal_dtn_loss(
     # H_DtN(x) = Σ_m  (sign * kz_m/k0) * E_m * exp(i m G0 x)
     # where E_m is the DFT coefficient of E_scat
 
-    loss = torch.zeros(1, dtype=x_pts.dtype, device=x_pts.device)
     H_dtn_re = torch.zeros(N_x, dtype=x_pts.dtype, device=x_pts.device)
     H_dtn_im = torch.zeros(N_x, dtype=x_pts.dtype, device=x_pts.device)
 
@@ -230,8 +227,26 @@ def modal_dtn_loss(
         H_dtn_re = H_dtn_re + Hm_dtn_re * cos_j - Hm_dtn_im * sin_j
         H_dtn_im = H_dtn_im + Hm_dtn_re * sin_j + Hm_dtn_im * cos_j
 
-    loss = torch.mean((H_scat_c_re - H_dtn_re)**2 + (H_scat_c_im - H_dtn_im)**2)
-    return loss
+    return H_scat_c_re - H_dtn_re, H_scat_c_im - H_dtn_im
+
+
+def modal_dtn_loss(
+    subnet,
+    x_pts: torch.Tensor,
+    z_val: float,
+    physics: "PhysicsConfig",
+    boundary: str,              # "top" or "bottom"
+    n_medium: float,
+    n_dtn_orders: int = 10,
+) -> torch.Tensor:
+    """DtN boundary loss for the scattered field at a horizontal boundary.
+
+    Computes pointwise DtN target H̃_x^DtN(x) and returns MSE vs PINN H̃_x.
+    """
+    dHr, dHi = modal_dtn_pointwise(
+        subnet, x_pts, z_val, physics, boundary, n_medium, n_dtn_orders,
+    )
+    return torch.mean(dHr**2 + dHi**2)
 
 
 def modal_dtn_loss_lbg(

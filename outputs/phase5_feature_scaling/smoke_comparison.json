@@ -1,0 +1,26 @@
+{
+  "A_zero_head": {
+    "label": "A_zero_head",
+    "epochs": 1000,
+    "lr": 0.0005,
+    "init_theta_provided": false,
+    "final_t_minus1": 0.005547344189589806,
+    "final_t_plus1": 0.005218738231094909,
+    "final_R_plus_T": 1.0018563222382773,
+    "final_total_complex_l2": 0.27234014729238676,
+    "final_scattered_complex_l2": 5.783009025830219,
+    "final_total_loss": 0.00028906403779659534
+  },
+  "B_ls_init": {
+    "label": "B_ls_init",
+    "epochs": 1000,
+    "lr": 0.0005,
+    "init_theta_provided": true,
+    "final_t_minus1": 0.00427481767182261,
+    "final_t_plus1": 0.0042030203630389375,
+    "final_R_plus_T": 903411.2899074468,
+    "final_total_complex_l2": 127080.00032035242,
+    "final_scattered_complex_l2": 2698481.2785097924,
+    "final_total_loss": 0.00015397982913036438
+  }
+}

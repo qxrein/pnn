@@ -1,0 +1,4 @@
+method,numerical_rank,condition_number,residual_before,residual_after_linear,residual_after_model_eval,reeval_ok,final_head_norm,t_minus1_abs,t_plus1_abs,t_minus1_complex_error,t_plus1_complex_error,total_complex_l2,R_plus_T,decision,note
+raw least squares (linear),344,651500000000.0,0.5899,8.57e-08,0.5899,False,1.86e+16,0.006378,0.006378,0.05295,0.05295,18671 (overflow),1796 (overflow),Case D,theta norm 1.86e16 — overflow in model eval
+physical least squares (linear),344,866000000000.0,0.2216,5.57e-08,0.5899,False,1.99e+16,0.006378,0.006378,n/a,n/a,63425 (overflow),19968 (overflow),Case D,theta norm 1.99e16 — overflow in model eval
+"Phase 6 baseline (best_epoch=1, seed=42)",N/A,N/A,N/A,N/A,0.0009,True,N/A,0.00638,0.00638,0.04303,0.04303,0.047,1.00006,Phase 6 invalid,target |t_pm1| = 0.04941

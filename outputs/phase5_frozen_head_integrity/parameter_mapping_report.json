@@ -1,0 +1,175 @@
+{
+  "all_passed": true,
+  "n_head_parameters": 1386,
+  "n_frozen_parameters": 234,
+  "parameter_ordering_hash": "e9ff9446ba263d6fea31ab0596378b5a667d688aa9dcbb9a9ff10143b52b16c1",
+  "parameter_shapes": [
+    {
+      "name": "net_air.coefficient_mlp.2.weight",
+      "shape": [
+        14,
+        32
+      ],
+      "numel": 448,
+      "offset": 0
+    },
+    {
+      "name": "net_air.coefficient_mlp.2.bias",
+      "shape": [
+        14
+      ],
+      "numel": 14,
+      "offset": 448
+    },
+    {
+      "name": "net_ridge.coefficient_mlp.2.weight",
+      "shape": [
+        14,
+        32
+      ],
+      "numel": 448,
+      "offset": 462
+    },
+    {
+      "name": "net_ridge.coefficient_mlp.2.bias",
+      "shape": [
+        14
+      ],
+      "numel": 14,
+      "offset": 910
+    },
+    {
+      "name": "net_substrate.coefficient_mlp.2.weight",
+      "shape": [
+        14,
+        32
+      ],
+      "numel": 448,
+      "offset": 924
+    },
+    {
+      "name": "net_substrate.coefficient_mlp.2.bias",
+      "shape": [
+        14
+      ],
+      "numel": 14,
+      "offset": 1372
+    }
+  ],
+  "test_indices": [
+    0,
+    1,
+    10,
+    100,
+    500,
+    1000,
+    1385
+  ],
+  "results": [
+    {
+      "parameter_index": 0,
+      "parameter_name": "net_air.coefficient_mlp.2.weight",
+      "tensor_name": "net_air.coefficient_mlp.2.weight",
+      "subnet": "air",
+      "kind": "weight",
+      "tensor_offset": 0,
+      "local_index": 0,
+      "assigned_value": 1.0,
+      "readback_value": 1.0,
+      "readback_error": 0.0,
+      "max_non_target_change": 0.0,
+      "max_hidden_parameter_change": 0.0,
+      "passed": true
+    },
+    {
+      "parameter_index": 1,
+      "parameter_name": "net_air.coefficient_mlp.2.weight",
+      "tensor_name": "net_air.coefficient_mlp.2.weight",
+      "subnet": "air",
+      "kind": "weight",
+      "tensor_offset": 0,
+      "local_index": 1,
+      "assigned_value": 1.0,
+      "readback_value": 1.0,
+      "readback_error": 0.0,
+      "max_non_target_change": 0.0,
+      "max_hidden_parameter_change": 0.0,
+      "passed": true
+    },
+    {
+      "parameter_index": 10,
+      "parameter_name": "net_air.coefficient_mlp.2.weight",
+      "tensor_name": "net_air.coefficient_mlp.2.weight",
+      "subnet": "air",
+      "kind": "weight",
+      "tensor_offset": 0,
+      "local_index": 10,
+      "assigned_value": 1.0,
+      "readback_value": 1.0,
+      "readback_error": 0.0,
+      "max_non_target_change": 0.0,
+      "max_hidden_parameter_change": 0.0,
+      "passed": true
+    },
+    {
+      "parameter_index": 100,
+      "parameter_name": "net_air.coefficient_mlp.2.weight",
+      "tensor_name": "net_air.coefficient_mlp.2.weight",
+      "subnet": "air",
+      "kind": "weight",
+      "tensor_offset": 0,
+      "local_index": 100,
+      "assigned_value": 1.0,
+      "readback_value": 1.0,
+      "readback_error": 0.0,
+      "max_non_target_change": 0.0,
+      "max_hidden_parameter_change": 0.0,
+      "passed": true
+    },
+    {
+      "parameter_index": 500,
+      "parameter_name": "net_ridge.coefficient_mlp.2.weight",
+      "tensor_name": "net_ridge.coefficient_mlp.2.weight",
+      "subnet": "ridge",
+      "kind": "weight",
+      "tensor_offset": 462,
+      "local_index": 38,
+      "assigned_value": 1.0,
+      "readback_value": 1.0,
+      "readback_error": 0.0,
+      "max_non_target_change": 0.0,
+      "max_hidden_parameter_change": 0.0,
+      "passed": true
+    },
+    {
+      "parameter_index": 1000,
+      "parameter_name": "net_substrate.coefficient_mlp.2.weight",
+      "tensor_name": "net_substrate.coefficient_mlp.2.weight",
+      "subnet": "substrate",
+      "kind": "weight",
+      "tensor_offset": 924,
+      "local_index": 76,
+      "assigned_value": 1.0,
+      "readback_value": 1.0,
+      "readback_error": 0.0,
+      "max_non_target_change": 0.0,
+      "max_hidden_parameter_change": 0.0,
+      "passed": true
+    },
+    {
+      "parameter_index": 1385,
+      "parameter_name": "net_substrate.coefficient_mlp.2.bias",
+      "tensor_name": "net_substrate.coefficient_mlp.2.bias",
+      "subnet": "substrate",
+      "kind": "bias",
+      "tensor_offset": 1372,
+      "local_index": 13,
+      "assigned_value": 1.0,
+      "readback_value": 1.0,
+      "readback_error": 0.0,
+      "max_non_target_change": 0.0,
+      "max_hidden_parameter_change": 0.0,
+      "passed": true
+    }
+  ]
+}

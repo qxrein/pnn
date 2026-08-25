@@ -1,0 +1,283 @@
+{
+  "companion_path": "/Users/rein/projects/rero/pinn_optics/outputs/reference_companion/rcwa_te_companion_v1.npz",
+  "canonical_path": "/Users/rein/projects/rero/pinn_optics/outputs/reference_lambda_0p8_geometry_consistent_20260824.npz",
+  "canonical_sha256": "82fbd541425c6d7914678e1cca94a9915e529e4e816c9f969100281ad7d369d5",
+  "companion_sha256": "3a58df7b98c3c403943dd088845479997c33ce3503962c578deadfce132c6c2a",
+  "generator_commit": "f9021fe86d0d06615b8433d9fe1284df25d8e70f",
+  "generator_config_hash": "5494444f97b7e9f160f3ded08e0b5e9832587eed96d1c7716d3d1f1ee6c57916",
+  "schema_version": "1.0.0",
+  "dtype": "complex128",
+  "time_convention": "exp(+i omega t)",
+  "polarization_convention": "TE; Ey; Htilde=Z0*H; Hx=(i/k0)*dEy/dz; Hz=-(i/k0)*dEy/dx; downward exp(-i kz z) has Hx=(kz/k0) Ey",
+  "scattered_definition": "layered_background",
+  "array_shapes": {
+    "schema_version": [],
+    "canonical_npz_sha256": [],
+    "generator_commit": [],
+    "generator_config_hash": [],
+    "dtype": [],
+    "time_convention": [],
+    "polarization_convention": [],
+    "x": [
+      128
+    ],
+    "z": [
+      256
+    ],
+    "region_id": [
+      256,
+      128
+    ],
+    "epsilon_r": [
+      256,
+      128
+    ],
+    "Ey_total": [
+      256,
+      128
+    ],
+    "Hx_total": [
+      256,
+      128
+    ],
+    "Hz_total": [
+      256,
+      128
+    ],
+    "Ey_scattered": [
+      256,
+      128
+    ],
+    "Hx_scattered": [
+      256,
+      128
+    ],
+    "Hz_scattered": [
+      256,
+      128
+    ],
+    "kx": [
+      151
+    ],
+    "kz_air": [
+      151
+    ],
+    "kz_substrate": [
+      151
+    ],
+    "c_refl": [
+      151
+    ],
+    "c_trans": [
+      151
+    ],
+    "powers": [
+      2,
+      151
+    ],
+    "interface_name": [
+      230
+    ],
+    "interface_x": [
+      230
+    ],
+    "interface_z": [
+      230
+    ],
+    "interface_normal": [
+      230,
+      2
+    ],
+    "Ey_minus": [
+      230
+    ],
+    "Hx_minus": [
+      230
+    ],
+    "Hz_minus": [
+      230
+    ],
+    "Ey_plus": [
+      230
+    ],
+    "Hx_plus": [
+      230
+    ],
+    "Hz_plus": [
+      230
+    ],
+    "layer_names": [
+      3
+    ],
+    "layer_z_bounds": [
+      3,
+      2
+    ],
+    "layer_modal_Ey": [
+      3,
+      151
+    ],
+    "layer_modal_Hx": [
+      3,
+      151
+    ],
+    "layer_modal_Hz": [
+      3,
+      151
+    ]
+  },
+  "array_dtypes": {
+    "schema_version": "<U5",
+    "canonical_npz_sha256": "<U64",
+    "generator_commit": "<U40",
+    "generator_config_hash": "<U64",
+    "dtype": "<U10",
+    "time_convention": "<U15",
+    "polarization_convention": "<U97",
+    "x": "float64",
+    "z": "float64",
+    "region_id": "int8",
+    "epsilon_r": "float64",
+    "Ey_total": "complex128",
+    "Hx_total": "complex128",
+    "Hz_total": "complex128",
+    "Ey_scattered": "complex128",
+    "Hx_scattered": "complex128",
+    "Hz_scattered": "complex128",
+    "kx": "float64",
+    "kz_air": "complex128",
+    "kz_substrate": "complex128",
+    "c_refl": "complex128",
+    "c_trans": "complex128",
+    "powers": "float64",
+    "interface_name": "<U27",
+    "interface_x": "float64",
+    "interface_z": "float64",
+    "interface_normal": "float64",
+    "Ey_minus": "complex128",
+    "Hx_minus": "complex128",
+    "Hz_minus": "complex128",
+    "Ey_plus": "complex128",
+    "Hx_plus": "complex128",
+    "Hz_plus": "complex128",
+    "layer_names": "<U9",
+    "layer_z_bounds": "float64",
+    "layer_modal_Ey": "complex128",
+    "layer_modal_Hx": "complex128",
+    "layer_modal_Hz": "complex128"
+  },
+  "array_sha256": {
+    "schema_version": "29429cd89836fd957d21b8f1aceebc6945978dd526ffe97c545172cf67dfc330",
+    "canonical_npz_sha256": "c1694c15e162b0a6d372592dd8faba6ead636a32ce0fce6024b13034e328d131",
+    "generator_commit": "ab153708c010ecabd02f162c8f971cc49d3a6ae67c991d380c3560b48520ad8e",
+    "generator_config_hash": "3c4d76a345972f62781be510e9398ba72d3616f59707cfa431b5b73f14db700e",
+    "dtype": "5f4997f25f076e633fc9a73de281fb5d906ccb47df1ae5c717e5d2461eaf439a",
+    "time_convention": "c6d816d29606de96b770c3879ecfe387dd21d1c5fb1e5b08ffc69812df21a7ab",
+    "polarization_convention": "b390ded9a434abfd960cfc1297e40f1d058d895595b490909440c3b7cfa83b86",
+    "x": "2bd4849299c82d1d1639cc8479901e41fe8835dec4b9a656cf970786bdc7acc7",
+    "z": "59d090e983671f25a09bce98edbd05f1c63cc4d5b9ba6e4584c7ab352aac757b",
+    "region_id": "e05529aa786159720d9b25e7edb6ef86ffad1b5631694359faf58e4d4228ba8c",
+    "epsilon_r": "83ea82b8d7a21b48c7d2e78a4685e6012dc3338da3671ad4add448a41a9d8a40",
+    "Ey_total": "e88f6173f3f36cf2358db6736bf57f49c09266431e1c4b34ef7298c7da2bbea5",
+    "Hx_total": "a3b0d2f2d0a36e81371738967eada83ed6cda55cef3deeb279287838eee07656",
+    "Hz_total": "848bf5d7ee21a679c52f38163d61af843583d7e9860df4bf7e2ae8040670b77b",
+    "Ey_scattered": "39c559712492a5c087f47318b960f0221ed2e7dc7ebddb7d0596da5fdb106710",
+    "Hx_scattered": "7ab47ff337717b42de7423dad1397166f0ad28f61781a220d18fa392ab5f4a6f",
+    "Hz_scattered": "848bf5d7ee21a679c52f38163d61af843583d7e9860df4bf7e2ae8040670b77b",
+    "kx": "640c1039a72892c4e9d70b0e1e730b5011f9c0869f015196743aa7f5cc605b14",
+    "kz_air": "904bfe0ad33c1108a3663615937eb2e7336142be59f2412ca48870ec10cd40a8",
+    "kz_substrate": "25b886eef165620709caa39a7d9b6036b3fc703bdfa27d83e1c77a7453ed372a",
+    "c_refl": "0fe833ec55d03674cbb58a9f67c2d7f65d5eeb331e8421f41d911aeb79d6ee90",
+    "c_trans": "611345166f33e10edc877fbcd9914176b03b698ed6c6666029d770ac3a6ce5ba",
+    "powers": "621e2bfa214cc5eb4796d6692e5f10c0aebbf6dcc55c7c9044a00c48407442f4",
+    "interface_name": "929d9ee907bc598a99d76547ef643f5d26612022d519f1d92a2fc593d88416eb",
+    "interface_x": "cfcce853b7db8f0f89870567aeda516c7823742eaf8a53ed9096d0cfa9b4b25a",
+    "interface_z": "7e82b3c80a91cfdce29c38ec2fa9b9624a02b0a11cee5985a6582df8859948ce",
+    "interface_normal": "6e72d6dbaa0d57bf84240e7af5945826aa19ecc543e352b5acaaab60f919e83e",
+    "Ey_minus": "2ff6437fc22c0a6757c9d0f7ccfbade558b0816bc8b1f99aa40df5ea74702886",
+    "Hx_minus": "f2e364638e72c596ee18f9ef02d4e3fbe2e569758efb1904c17db7d9e92a7ab1",
+    "Hz_minus": "1a8a13fe9055c3dc86bb6465a21430cb0c16c506f1f7a9c83cf50b180555f118",
+    "Ey_plus": "402f0cdd57a7447935652b06a3c50fa31c7fc874a9490c668d955e9551b7344e",
+    "Hx_plus": "43abd36a4103af4ae29a6bed7db9e20c2e4f2bfa10d0fb16d4ac0cf9385600af",
+    "Hz_plus": "634d2d226d859ca24cc678c70e82da5ee1ca060a2709858354f82c1b744ec3b8",
+    "layer_names": "933862f3dd4137c356d362413184f889cc17b2b01766e6ce396fd0a3c91e2755",
+    "layer_z_bounds": "f5b66f0d0fa78ccca7490bd96f84ad6afc7105e02ba74d6677c906f4e3e62b46",
+    "layer_modal_Ey": "4ffcca094e93f26685177aa46ca08ee1ce01219cff112eed3a47c4b20780cee2",
+    "layer_modal_Hx": "0db10cb5cb0c7a7df5ef279a418e51e898b86f8a75c75224852809e7683a62eb",
+    "layer_modal_Hz": "7ae4a6e2b6318583d5793240b737daa729df5059ab3292c4f421e1725b2e0f56"
+  },
+  "powers_R_total": 0.03825709765869599,
+  "powers_T_total": 0.9617429023412993,
+  "max_reconstruction_error": 0.0,
+  "boundary_coefficient_error": 0.0,
+  "residual_norms_by_region": {
+    "air": {
+      "faraday_z": 1.0079994754978035e-15,
+      "faraday_x": 2.0613071595053956e-17,
+      "ampere": 1.0579231451427364e-15
+    },
+    "ridge": {
+      "faraday_z": 2.4299176923108283e-15,
+      "faraday_x": 1.3763997607031892e-16,
+      "ampere": 0.0064502811145009074
+    },
+    "substrate": {
+      "faraday_z": 1.738073523349948e-15,
+      "faraday_x": 1.3381714418924637e-16,
+      "ampere": 0.001817098696652463
+    }
+  },
+  "residual_homogeneous_slabs": {
+    "air_slab": 2.069662456680569e-15,
+    "substrate_slab": 4.046604303277744e-15
+  },
+  "interface_jump_norms": {
+    "air_substrate_left": {
+      "Ey": 1.5234879725925713e-16,
+      "Hx": 7.727039645224472e-16,
+      "Hz": 1.1471579282724016e-15
+    },
+    "air_substrate_right": {
+      "Ey": 1.4473135739636432e-16,
+      "Hx": 8.040372944934026e-16,
+      "Hz": 1.0268117968332588e-15
+    },
+    "ridge_bottom": {
+      "Ey": 2.1755370044939037e-16,
+      "Hx": 7.616704455477055e-16,
+      "Hz": 1.093617872924369e-15
+    },
+    "ridge_left_edge": {
+      "Ey": 1.319813353266198e-08,
+      "Hx": 6.693211192351111e-09,
+      "Hz": 3.6867142004440095e-08
+    },
+    "ridge_right_edge": {
+      "Ey": 1.3198133557339124e-08,
+      "Hx": 6.693211228175275e-09,
+      "Hz": 3.6867140770067034e-08
+    },
+    "ridge_top": {
+      "Ey": 4.023423932268253e-16,
+      "Hx": 5.533066486499785e-16,
+      "Hz": 5.345687824777027e-16
+    },
+    "upper_triple_junction_left": {
+      "Ey": 1.7539980027682395e-16,
+      "Hx": 5.99147547728942e-16,
+      "Hz": 9.824965866031043e-16
+    },
+    "upper_triple_junction_right": {
+      "Ey": 1.5688235066366096e-16,
+      "Hx": 9.400200115051145e-16,
+      "Hz": 9.885576964495724e-16
+    }
+  },
+  "gates": {
+    "A_ey_reconstruction": true,
+    "B_boundary_coefficients": true,
+    "C_homogeneous_residual": true,
+    "D_vertical_Ey_Hz": true,
+    "E_horizontal_Ey_Hx": true
+  }
+}

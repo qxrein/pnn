@@ -178,22 +178,15 @@ def _amplitudes(SL: np.ndarray, SR: np.ndarray, c_inc: np.ndarray) -> tuple:
 # ---------------------------------------------------------------------------
 
 
-def solve_rcwa(
+def compute_rcwa_state(
     physics: PhysicsConfig,
     N_harmonics: int = 25,
     Nfine: int = 2048,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, dict]:
-    """RCWA + FMM solution for the binary grating.
+) -> dict:
+    """Layerwise RCWA/FMM state from the canonical generator.
 
-    Returns x (Nx,), z (Nz,), E_real (Nz, Nx), E_imag (Nz, Nx), amplitudes dict.
-
-    amplitudes dict contains:
-        c_refl  : (n,) complex reflection amplitudes at z=0
-        c_trans : (n,) complex transmission amplitudes into substrate
-        kz_air  : (n,) z-wavenumbers in air
-        kz_sub  : (n,) z-wavenumbers in substrate
-        kx      : (n,) x-wavenumbers (Bloch orders)
-        R_total, T_total, R_m, T_m, energy_check
+    Magnetic fields are obtained from the same modal coefficients as E_y,
+    never from finite differences of a visualization raster.
     """
     k0 = physics.k0
     N = N_harmonics
@@ -244,7 +237,6 @@ def solve_rcwa(
     SR_de   = _star(Sd, Se)
     SR_cde  = _star(Sc, SR_de)
     SR_bcde = _star(Sb, SR_cde)
-    SR_all  = _star(Sa, SR_bcde)   # = S_global again
 
     # Incident amplitude (order 0, unit amplitude)
     c_inc = np.zeros(n, dtype=complex)
@@ -262,43 +254,189 @@ def solve_rcwa(
     # z = z_g_top    : right of grating-sub interface (= top of substrate slab)
     c_fwd_sub_top, c_bwd_sub_top = _amplitudes(SL_abcd, SR_e, c_inc)
 
-    # Visualization grid
+    return {
+        "physics": physics,
+        "N_harmonics": N,
+        "Nfine": Nfine,
+        "k0": k0,
+        "n": n,
+        "z_g_bot": z_g_bot,
+        "z_g_top": z_g_top,
+        "z_bot": z_bot,
+        "h_air": h_air,
+        "h_grat": h_grat,
+        "h_sub": h_sub,
+        "kx": kx,
+        "kz_air": kz_air,
+        "kz_sub": kz_sub,
+        "gamma": gamma,
+        "W": W,
+        "c_inc": c_inc,
+        "c_fwd_air_top": c_fwd_air_top,
+        "c_bwd_air_top": c_bwd_air_top,
+        "c_fwd_air_bot": c_fwd_air_bot,
+        "c_bwd_air_bot": c_bwd_air_bot,
+        "c_fwd_grat_top": c_fwd_grat_top,
+        "c_bwd_grat_top": c_bwd_grat_top,
+        "c_fwd_grat_bot": c_fwd_grat_bot,
+        "c_bwd_grat_bot": c_bwd_grat_bot,
+        "c_fwd_sub_top": c_fwd_sub_top,
+        "c_bwd_sub_top": c_bwd_sub_top,
+    }
+
+
+def _auto_layer(state: dict, zv: float) -> str:
+    """Raster layer assignment used by the canonical E_y reconstruction."""
+    if zv <= state["z_g_bot"]:
+        return "air"
+    if zv <= state["z_g_top"]:
+        return "grating"
+    return "substrate"
+
+
+def fourier_eh_at_z(state: dict, zv: float, layer: str | None = None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Fourier coefficients of (E_y, H̃_x, H̃_z) at one z from modal amplitudes.
+
+    TE convention (exp(+iωt), H̃ = Z0 H):
+        H̃_x = (i/k0) ∂E_y/∂z
+        H̃_z = -(i/k0) ∂E_y/∂x
+    so a downward wave exp(-i kz z) has H̃_x = (kz/k0) E_y.
+    """
+    k0 = state["k0"]
+    kx = state["kx"]
+    layer = _auto_layer(state, zv) if layer is None else layer
+
+    if layer == "air":
+        kz = state["kz_air"]
+        fwd = state["c_fwd_air_top"] * np.exp(-1j * kz * zv)
+        bwd = state["c_bwd_air_bot"] * np.exp(+1j * kz * (zv - state["z_g_bot"]))
+        ey = fwd + bwd
+        hx = (kz / k0) * (fwd - bwd)
+        hz = (kx / k0) * ey
+        return ey, hx, hz
+
+    if layer == "grating":
+        gamma = state["gamma"]
+        W = state["W"]
+        zl = zv - state["z_g_bot"]
+        fwd = state["c_fwd_grat_top"] * np.exp(-1j * gamma * zl)
+        bwd = state["c_bwd_grat_bot"] * np.exp(+1j * gamma * (zl - state["h_grat"]))
+        modal = fwd + bwd
+        ey = W @ modal
+        hx = W @ ((gamma / k0) * (fwd - bwd))
+        hz = (kx / k0) * ey
+        return ey, hx, hz
+
+    if layer == "substrate":
+        kz = state["kz_sub"]
+        fwd = state["c_fwd_sub_top"] * np.exp(-1j * kz * (zv - state["z_g_top"]))
+        ey = fwd
+        hx = (kz / k0) * fwd
+        hz = (kx / k0) * ey
+        return ey, hx, hz
+
+    raise ValueError(f"Unknown RCWA layer: {layer}")
+
+
+def fourier_eh_derivatives_at_z(
+    state: dict, zv: float, layer: str | None = None
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Analytic Fourier coefficients of E_y, H̃_x, H̃_z and z-derivatives.
+
+    Returns (Ey, Hx, Hz, dEy_dz, dHx_dz) in Fourier space.  x-derivatives
+    follow from multiplication by i kx.
+    """
+    k0 = state["k0"]
+    kx = state["kx"]
+    layer = _auto_layer(state, zv) if layer is None else layer
+
+    if layer == "air":
+        kz = state["kz_air"]
+        fwd = state["c_fwd_air_top"] * np.exp(-1j * kz * zv)
+        bwd = state["c_bwd_air_bot"] * np.exp(+1j * kz * (zv - state["z_g_bot"]))
+        ey = fwd + bwd
+        hx = (kz / k0) * (fwd - bwd)
+        d_fwd = -1j * kz * fwd
+        d_bwd = +1j * kz * bwd
+        return ey, hx, (kx / k0) * ey, d_fwd + d_bwd, (kz / k0) * (d_fwd - d_bwd)
+
+    if layer == "grating":
+        gamma = state["gamma"]
+        W = state["W"]
+        zl = zv - state["z_g_bot"]
+        fwd = state["c_fwd_grat_top"] * np.exp(-1j * gamma * zl)
+        bwd = state["c_bwd_grat_bot"] * np.exp(+1j * gamma * (zl - state["h_grat"]))
+        d_fwd = -1j * gamma * fwd
+        d_bwd = +1j * gamma * bwd
+        ey = W @ (fwd + bwd)
+        hx = W @ ((gamma / k0) * (fwd - bwd))
+        return ey, hx, (kx / k0) * ey, W @ (d_fwd + d_bwd), W @ ((gamma / k0) * (d_fwd - d_bwd))
+
+    if layer == "substrate":
+        kz = state["kz_sub"]
+        fwd = state["c_fwd_sub_top"] * np.exp(-1j * kz * (zv - state["z_g_top"]))
+        d_fwd = -1j * kz * fwd
+        ey = fwd
+        hx = (kz / k0) * fwd
+        return ey, hx, (kx / k0) * ey, d_fwd, (kz / k0) * d_fwd
+
+    raise ValueError(f"Unknown RCWA layer: {layer}")
+
+
+def reconstruct_ey_grid(state: dict, x: np.ndarray, z_arr: np.ndarray) -> np.ndarray:
+    """Canonical E_y reconstruction on a visualization grid (Nz, Nx)."""
+    X_phase = np.exp(1j * np.outer(x, state["kx"]))
+    E_field = np.zeros((len(z_arr), len(x)), dtype=complex)
+    for iz, zv in enumerate(z_arr):
+        ey, _, _ = fourier_eh_at_z(state, float(zv), layer=None)
+        E_field[iz, :] = X_phase @ ey
+    return E_field
+
+
+def reconstruct_eh_grid(
+    state: dict, x: np.ndarray, z_arr: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Modal (E_y, H̃_x, H̃_z) on a visualization grid."""
+    X_phase = np.exp(1j * np.outer(x, state["kx"]))
+    nz, nx = len(z_arr), len(x)
+    Ey = np.zeros((nz, nx), dtype=complex)
+    Hx = np.zeros((nz, nx), dtype=complex)
+    Hz = np.zeros((nz, nx), dtype=complex)
+    for iz, zv in enumerate(z_arr):
+        ey, hx, hz = fourier_eh_at_z(state, float(zv), layer=None)
+        Ey[iz, :] = X_phase @ ey
+        Hx[iz, :] = X_phase @ hx
+        Hz[iz, :] = X_phase @ hz
+    return Ey, Hx, Hz
+
+
+def solve_rcwa(
+    physics: PhysicsConfig,
+    N_harmonics: int = 25,
+    Nfine: int = 2048,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, dict]:
+    """RCWA + FMM solution for the binary grating.
+
+    Returns x (Nx,), z (Nz,), E_real (Nz, Nx), E_imag (Nz, Nx), amplitudes dict.
+
+    amplitudes dict contains:
+        c_refl  : (n,) complex reflection amplitudes at z=0
+        c_trans : (n,) complex transmission amplitudes into substrate
+        kz_air  : (n,) z-wavenumbers in air
+        kz_sub  : (n,) z-wavenumbers in substrate
+        kx      : (n,) x-wavenumbers (Bloch orders)
+        R_total, T_total, R_m, T_m, energy_check
+    """
+    state = compute_rcwa_state(physics, N_harmonics=N_harmonics, Nfine=Nfine)
     Nx = physics.nx_visualization
     Nz = physics.nz_visualization
     x = np.linspace(0.0, physics.period, Nx)
-    z_arr = np.linspace(0.0, z_bot, Nz)
-    X_phase = np.exp(1j * np.outer(x, kx))   # (Nx, n)
-
-    E_field = np.zeros((Nz, Nx), dtype=complex)
-
-    # Backward-wave amplitudes are referenced at the BOTTOM of each region so
-    # that evanescent backward modes decay toward z=0 (upward) without overflow.
-    # c_bwd * exp(+i kz (z - z_ref_bot))  with  z < z_ref_bot  is well-behaved
-    # since Im(kz) <= 0 means exp(+Im(kz)*(z-z_ref_bot)) decays as z -> 0.
-
-    for iz, zv in enumerate(z_arr):
-        if zv <= z_g_bot:
-            zl_fwd = zv                  # distance from top (forward decay)
-            zl_bwd = zv - z_g_bot        # distance from bottom (≤ 0, bwd decay upward)
-            fwd = c_fwd_air_top * np.exp(-1j * kz_air * zl_fwd)
-            bwd = c_bwd_air_bot * np.exp(+1j * kz_air * zl_bwd)
-            E_field[iz, :] = X_phase @ (fwd + bwd)
-        elif zv <= z_g_top:
-            zl = zv - z_g_bot
-            fwd = c_fwd_grat_top * np.exp(-1j * gamma * zl)
-            bwd = c_bwd_grat_bot * np.exp(+1j * gamma * (zl - h_grat))
-            E_field[iz, :] = X_phase @ (W @ (fwd + bwd))
-        else:
-            zl = zv - z_g_top
-            fwd = c_fwd_sub_top * np.exp(-1j * kz_sub * zl)
-            # No backward wave in substrate (outgoing radiation condition)
-            E_field[iz, :] = X_phase @ fwd
-
-    # Energy conservation and amplitude summary
+    z_arr = np.linspace(0.0, state["z_bot"], Nz)
+    E_field = reconstruct_ey_grid(state, x, z_arr)
     amplitudes = _compute_amplitudes_and_energy(
-        c_bwd_air_top, c_fwd_sub_top, kz_air, kz_sub, kx, N
+        state["c_bwd_air_top"], state["c_fwd_sub_top"],
+        state["kz_air"], state["kz_sub"], state["kx"], state["N_harmonics"],
     )
-
     return x, z_arr, np.real(E_field), np.imag(E_field), amplitudes
 
 

@@ -1,0 +1,47 @@
+{
+  "all_hidden_features_invariant": true,
+  "invariance_by_magnitude": [
+    {
+      "head_magnitude": 1e-06,
+      "max_hidden_feature_change": 0.0,
+      "invariant": true
+    },
+    {
+      "head_magnitude": 0.001,
+      "max_hidden_feature_change": 0.0,
+      "invariant": true
+    },
+    {
+      "head_magnitude": 1.0,
+      "max_hidden_feature_change": 0.0,
+      "invariant": true
+    },
+    {
+      "head_magnitude": 1000.0,
+      "max_hidden_feature_change": 0.0,
+      "invariant": true
+    },
+    {
+      "head_magnitude": 1000000.0,
+      "max_hidden_feature_change": 0.0,
+      "invariant": true
+    }
+  ],
+  "linearity_check_error": 5.551115123125783e-17,
+  "linearity_passed": true,
+  "graph_operations": [
+    "coefficient_mlp[2] = Linear(32\u219214)  [final head, no activation]",
+    "reshape(-1, n_orders, 2)  [linear]",
+    "complex coeff = delta[...,0] + 1j*delta[...,1]  [linear]",
+    "phase = exp(1j*(kx*x - kz*z))  [constant wrt head params]",
+    "E_y = sum(phase * coeff)  [linear in coeff, hence linear in head params]",
+    "de_dx, de_dz via autograd  [linear in head params since E_y is linear]",
+    "H_x = i/k0 * de_dz  [linear]",
+    "H_z = -i/k0 * de_dx  [linear]",
+    "PDE residual = linear function of E_y, H_x, H_z  [linear in head params]",
+    "DtN residual: DFT(E_scat) and DFT(H_scat)  [linear in head params]",
+    "MSE = ||r||^2  [quadratic in head params, residual vector linear]",
+    "CONCLUSION: E_y, H_x, H_z, and all residual rows are AFFINE in head params"
+  ],
+  "conclusion": "Hidden features are computed from frozen z-basis parameters only (MLP[0] and MLP[1] are frozen). The final head MLP[2] is a plain Linear layer with no post-activation. Therefore E_y, H_x, H_z, and all residual rows are affine functions of the final-head parameters."
+}

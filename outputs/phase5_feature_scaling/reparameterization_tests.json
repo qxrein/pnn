@@ -1,0 +1,43 @@
+{
+  "T1_zero_head_output_zero": {
+    "max_abs_output": 0.0,
+    "passed": true,
+    "description": "zero final-head \u2192 E_scat=0 everywhere"
+  },
+  "T2_hidden_features_unchanged": {
+    "max_hidden_change": 0.0,
+    "passed": true,
+    "description": "Tanh output identical before and after scaling"
+  },
+  "T3_Wscaled_hscaled_equals_W_h": {
+    "max_error": 8.881784197001252e-16,
+    "passed": true,
+    "description": "W_scaled @ h_scaled = W_orig @ h for random W_orig"
+  },
+  "T4_production_residual_unchanged": {
+    "max_change": 0.0,
+    "rms_change": 0.0,
+    "passed": true,
+    "description": "production residual identical at zero head"
+  },
+  "T5_modal_extraction_unchanged": {
+    "t_minus1_unscaled": 0.00637755102040808,
+    "t_minus1_scaled": 0.00637755102040808,
+    "max_change": 0.0,
+    "passed": true,
+    "description": "modal extraction identical at zero head"
+  },
+  "T6_canonical_companion_unchanged": {
+    "canonical_sha_ok": true,
+    "companion_sha_ok": true,
+    "passed": true,
+    "description": "canonical reference and companion are unmodified"
+  },
+  "T7_scaled_residual_affine": {
+    "max_affine_error": 5.329070518200751e-15,
+    "n_test_cols": 20,
+    "passed": true,
+    "description": "residual is affine in scaled head parameters (mini test)"
+  },
+  "all_passed": true
+}

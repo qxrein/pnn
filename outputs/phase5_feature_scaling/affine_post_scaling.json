@@ -1,0 +1,101 @@
+{
+  "all_passed": true,
+  "affine_by_alpha": [
+    {
+      "alpha": 1e-06,
+      "theta_norm": 1.4033753390452606e-06,
+      "max_abs": 1.971998580326418e-21,
+      "rel": 2.3230396418588765e-20,
+      "valid": true
+    },
+    {
+      "alpha": 0.001,
+      "theta_norm": 0.0014033753390452605,
+      "max_abs": 1.3877787807814457e-17,
+      "rel": 4.8281205015326764e-17,
+      "valid": true
+    },
+    {
+      "alpha": 1.0,
+      "theta_norm": 1.4033753390452606,
+      "max_abs": 2.3314683517128287e-15,
+      "rel": 4.061827273935766e-16,
+      "valid": true
+    },
+    {
+      "alpha": 1000.0,
+      "theta_norm": 1403.3753390452605,
+      "max_abs": 3.410605131648481e-12,
+      "rel": 4.446466849728304e-16,
+      "valid": true
+    },
+    {
+      "alpha": 1000000.0,
+      "theta_norm": 1403375.3390452606,
+      "max_abs": 2.6775524020195007e-09,
+      "rel": 4.178989527675463e-16,
+      "valid": true
+    }
+  ],
+  "breakdown_alpha": null,
+  "one_hot_results": [
+    {
+      "idx": 0,
+      "readback": 1.0,
+      "max_others": 0.0,
+      "passed": true
+    },
+    {
+      "idx": 100,
+      "readback": 1.0,
+      "max_others": 0.0,
+      "passed": true
+    },
+    {
+      "idx": 500,
+      "readback": 1.0,
+      "max_others": 0.0,
+      "passed": true
+    },
+    {
+      "idx": 1000,
+      "readback": 1.0,
+      "max_others": 0.0,
+      "passed": true
+    },
+    {
+      "idx": 1385,
+      "readback": 1.0,
+      "max_others": 0.0,
+      "passed": true
+    }
+  ],
+  "hidden_invariance": [
+    {
+      "mag": 1e-06,
+      "max_hidden_change": 0.0,
+      "invariant": true
+    },
+    {
+      "mag": 0.001,
+      "max_hidden_change": 0.0,
+      "invariant": true
+    },
+    {
+      "mag": 1.0,
+      "max_hidden_change": 0.0,
+      "invariant": true
+    },
+    {
+      "mag": 1000.0,
+      "max_hidden_change": 0.0,
+      "invariant": true
+    },
+    {
+      "mag": 1000000.0,
+      "max_hidden_change": 0.0,
+      "invariant": true
+    }
+  ],
+  "affine_valid_for_all_tested_alphas": true
+}

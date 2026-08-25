@@ -1,0 +1,144 @@
+{
+  "audit_type": "frozen_head_integrity_and_regularised_ls",
+  "git_commit": "f9021fe86d0d06615b8433d9fe1284df25d8e70f",
+  "working_tree_status": "M scripts/__pycache__/generate_reference.cpython-314.pyc\n M scripts/generate_reference.py\n M src/__pycache__/modal_dtn.cpython-314.pyc\n M src/modal_dtn.py\n?? outputs/phase5_conditioning/\n?? outputs/phase5_conditioning_preflight_key_failed_20260825/\n?? outputs/phase5_equation_closure_frozen_head/\n?? outputs/phase5_frozen_head_integrity/\n?? outputs/phase5_physical_conditioning/\n?? outputs/phase5_physical_conditioning_partial_variant_d_20260825/\n?? outputs/phase5_physical_conditioning_preflight_keyfix_20260825/\n?? outputs/phase5_physical_conditioning_preflight_variant_e_collision_20260825/\n?? outputs/reference_companion/\n?? scripts/__pycache__/export_reference_companion.cpython-314.pyc\n?? scripts/__pycache__/run_frozen_head_integrity.cpython-314.pyc\n?? scripts/__pycache__/run_frozen_head_least_squares.cpython-314.pyc\n?? scripts/__pycache__/run_phase5_conditioning.cpython-314.pyc\n?? scripts/export_reference_companion.py\n?? scripts/run_frozen_head_integrity.py\n?? scripts/run_frozen_head_least_squares.py\n?? scripts/run_phase5_conditioning.py\n?? src/__pycache__/reference_companion.cpython-314.pyc\n?? src/reference_companion.py\n?? tests/__pycache__/test_frozen_head_least_squares.cpython-314-pytest-9.1.1.pyc\n?? tests/__pycache__/test_frozen_head_least_squares.cpython-314.pyc\n?? tests/__pycache__/test_reference_companion.cpython-314-pytest-9.1.1.pyc\n?? tests/__pycache__/test_reference_companion.cpython-314.pyc\n?? tests/test_frozen_head_least_squares.py\n?? tests/test_reference_companion.py",
+  "canonical_sha256": "82fbd541425c6d7914678e1cca94a9915e529e4e816c9f969100281ad7d369d5",
+  "companion_sha256": "3a58df7b98c3c403943dd088845479997c33ce3503962c578deadfce132c6c2a",
+  "canonical_modified": false,
+  "companion_used_in_loss": false,
+  "modal_loss_weight": 0.0,
+  "optical_coupling": false,
+  "parameter_ordering_hash": "e9ff9446ba263d6fea31ab0596378b5a667d688aa9dcbb9a9ff10143b52b16c1",
+  "n_head_parameters": 1386,
+  "n_frozen_parameters": 234,
+  "svd_rcond": 1e-12,
+  "affine_verification": {
+    "n_test_vectors": 5,
+    "max_absolute_affine_error": 1.4210854715202004e-14,
+    "relative_affine_error": 4.36997839782199e-16,
+    "rms_affine_error": 1.3323190933774455e-15,
+    "expected_max_absolute_error": 3.55e-15
+  },
+  "phase1_parameter_mapping": {
+    "all_passed": true
+  },
+  "phase2_hidden_invariance": {
+    "all_invariant": true,
+    "linearity_passed": true
+  },
+  "phase3_global_affine": {
+    "breakdown_alpha": 1000000000.0,
+    "valid_up_to": [
+      1e-06,
+      0.001,
+      1.0,
+      1000.0,
+      1000000.0
+    ]
+  },
+  "phase4_nullspace": {
+    "rank": 214,
+    "n_null": 1172,
+    "modal_sensitivity": {
+      "t_minus1": {
+        "null": 9.757107893044085e-12,
+        "active": 2.294200183354699
+      },
+      "t_plus1": {
+        "null": 8.124903433652076e-12,
+        "active": 2.2942001833546994
+      },
+      "t_0": {
+        "null": 2.506728170872903e-12,
+        "active": 2.2942001833546986
+      }
+    }
+  },
+  "phase5_candidates": {
+    "n_tikhonov": 7,
+    "n_trust_region": 4,
+    "n_finite": 11,
+    "lambda_sweep": [
+      1e-12,
+      1e-10,
+      1e-08,
+      1e-06,
+      0.0001,
+      0.01,
+      1.0
+    ],
+    "radii": [
+      1.0,
+      10.0,
+      100.0,
+      1000.0
+    ],
+    "tikhonov_norms": [
+      75022163.18254824,
+      61107902.45239699,
+      54547204.17931588,
+      31946303.12859016,
+      25531621.77350709,
+      29397632.1243925,
+      97336946.20589654
+    ],
+    "trust_norms": [
+      128485933828.52489,
+      924026480548.6365,
+      99305948172703.48,
+      993059481929606.1
+    ]
+  },
+  "phase6_reeval": {
+    "n_candidates": 11,
+    "n_reeval_ok": 5,
+    "best_t_minus1_abs": 0.0028005794479837105,
+    "target_t_pm1": 0.049410786
+  },
+  "decision": {
+    "case": "B",
+    "decision": "All finite regularised candidates fail to improve \u00b11 meaningfully, but the null-space analysis shows nonzero \u00b11 sensitivity in the null space. The residual system is underconstrained with respect to the transmitted modes. Investigate residual sampling, DtN constraints, or missing physically valid constraints before further training.",
+    "n_valid_candidates": 5,
+    "n_improving_candidates": 0,
+    "n_recovering_candidates": 0,
+    "null_has_modal_sensitivity": true,
+    "authorize_nonlinear_from_ls_head": false,
+    "start_10000_epoch_run": false,
+    "modal_data_loss": false,
+    "optical_coupling": false
+  },
+  "compileall": {
+    "returncode": 0,
+    "passed": true,
+    "output": "(clean)"
+  },
+  "pytest": {
+    "returncode": 0,
+    "passed": true,
+    "summary_line": "256 passed in 63.02s (0:01:03)",
+    "available": true,
+    "stdout_tail": "........................................................................ [ 28%]\n........................................................................ [ 56%]\n........................................................................ [ 84%]\n........................................                                 [100%]\n256 passed in 63.02s (0:01:03)"
+  },
+  "output_files": [
+    "outputs/phase5_frozen_head_integrity/candidates/tikhonov_lam1e+00_checkpoint.pt",
+    "outputs/phase5_frozen_head_integrity/candidates/tikhonov_lam1e-02_checkpoint.pt",
+    "outputs/phase5_frozen_head_integrity/candidates/tikhonov_lam1e-04_checkpoint.pt",
+    "outputs/phase5_frozen_head_integrity/candidates/tikhonov_lam1e-06_checkpoint.pt",
+    "outputs/phase5_frozen_head_integrity/candidates/tikhonov_lam1e-08_checkpoint.pt",
+    "outputs/phase5_frozen_head_integrity/candidates/tikhonov_lam1e-10_checkpoint.pt",
+    "outputs/phase5_frozen_head_integrity/candidates/tikhonov_lam1e-12_checkpoint.pt",
+    "outputs/phase5_frozen_head_integrity/candidates/trust_r1.0_checkpoint.pt",
+    "outputs/phase5_frozen_head_integrity/candidates/trust_r10.0_checkpoint.pt",
+    "outputs/phase5_frozen_head_integrity/candidates/trust_r100.0_checkpoint.pt",
+    "outputs/phase5_frozen_head_integrity/candidates/trust_r1000.0_checkpoint.pt",
+    "outputs/phase5_frozen_head_integrity/global_affine_report.json",
+    "outputs/phase5_frozen_head_integrity/hidden_feature_invariance.json",
+    "outputs/phase5_frozen_head_integrity/nullspace_modal_sensitivity.png",
+    "outputs/phase5_frozen_head_integrity/nullspace_observability.json",
+    "outputs/phase5_frozen_head_integrity/parameter_mapping_report.json",
+    "outputs/phase5_frozen_head_integrity/regularization_path.png",
+    "outputs/phase5_frozen_head_integrity/regularized_solve_report.json",
+    "outputs/phase5_frozen_head_integrity/shared_points.npz",
+    "outputs/phase5_frozen_head_integrity/singular_values.png"
+  ]
+}

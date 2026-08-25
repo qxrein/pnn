@@ -1,0 +1,33 @@
+{
+  "rows": [
+    {
+      "variant": "a_baseline",
+      "t_minus1": 0.0063616572522953154,
+      "t_plus1": 0.006180021096828086,
+      "total_complex_l2": 0.05890848510167642,
+      "scattered_complex_l2": 1.250892695872839,
+      "R_plus_T": 1.001978269610293,
+      "score": 1.3391508595197479
+    },
+    {
+      "variant": "b_normalized",
+      "t_minus1": 0.0063779863652978904,
+      "t_plus1": 0.006377304271137106,
+      "total_complex_l2": 0.047103582435004156,
+      "scattered_complex_l2": 1.0002213962163842,
+      "R_plus_T": 1.0000876866015982,
+      "score": 1.0863753645672867
+    },
+    {
+      "variant": "c_balanced",
+      "t_minus1": 0.006377986377243652,
+      "t_plus1": 0.006377304266221823,
+      "total_complex_l2": 0.04710358237136336,
+      "scattered_complex_l2": 1.0002213948650032,
+      "R_plus_T": 1.000087686478874,
+      "score": 1.086375363086151
+    }
+  ],
+  "phase5_passed": false,
+  "next_step": "No 10000-epoch run unless \u00b11 response improves."
+}

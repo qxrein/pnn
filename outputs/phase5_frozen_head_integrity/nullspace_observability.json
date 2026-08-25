@@ -1,0 +1,91 @@
+{
+  "rank": 214,
+  "n_null": 1172,
+  "n_active": 214,
+  "modal_sensitivity": {
+    "t_minus1": {
+      "modal_order": -1,
+      "null_space_sensitivity_norm": 9.757107893044085e-12,
+      "active_space_sensitivity_norm": 2.294200183354699,
+      "max_null_sensitivity": 3.207822625150153e-12,
+      "max_active_sensitivity": 0.49818667440190434,
+      "null_vs_active_ratio": 4.25294530260944e-12,
+      "best_null_vector_t_change_1e-3": 3.3122250621507775e-15,
+      "interpretation": "null space contributes to modal output"
+    },
+    "t_plus1": {
+      "modal_order": 1,
+      "null_space_sensitivity_norm": 8.124903433652076e-12,
+      "active_space_sensitivity_norm": 2.2942001833546994,
+      "max_null_sensitivity": 2.1255187280383447e-12,
+      "max_active_sensitivity": 0.5684181916730726,
+      "null_vs_active_ratio": 3.541497159925869e-12,
+      "best_null_vector_t_change_1e-3": 2.6627208546709983e-15,
+      "interpretation": "null space contributes to modal output"
+    },
+    "t_0": {
+      "modal_order": 0,
+      "null_space_sensitivity_norm": 2.506728170872903e-12,
+      "active_space_sensitivity_norm": 2.2942001833546986,
+      "max_null_sensitivity": 4.889699756205346e-13,
+      "max_active_sensitivity": 0.5802417847794001,
+      "null_vs_active_ratio": 1.0926370719783638e-12,
+      "best_null_vector_t_change_1e-3": 5.63041779259765e-16,
+      "interpretation": "null space contributes to modal output"
+    }
+  },
+  "residual_norm_of_first_10_null_vecs_raw": [
+    3.727907374932016e-11,
+    3.727907579364435e-11,
+    6.62161498912229e-11,
+    6.62161586827868e-11,
+    2.9769661512233374e-11,
+    2.9769554407760847e-11,
+    4.9060032734932696e-11,
+    4.906000974080014e-11,
+    1.3284262984389315e-11,
+    1.3284240243231222e-11
+  ],
+  "residual_norm_of_first_10_null_vecs_physical": [
+    2.988863946076685e-11,
+    2.988864615681638e-11,
+    2.6344062206489244e-11,
+    2.6344060978871308e-11,
+    2.3034429180107083e-11,
+    2.3034421553032937e-11,
+    1.970842857546039e-11,
+    1.9708430787913312e-11,
+    5.8961196040526925e-12,
+    5.896109618521392e-12
+  ],
+  "t0_at_zero_head": {
+    "-3": {
+      "re": 0.0,
+      "im": 0.0
+    },
+    "-2": {
+      "re": 0.0,
+      "im": 0.0
+    },
+    "-1": {
+      "re": 0.0,
+      "im": 0.0
+    },
+    "0": {
+      "re": 0.0,
+      "im": 0.0
+    },
+    "1": {
+      "re": 0.0,
+      "im": 0.0
+    },
+    "2": {
+      "re": 0.0,
+      "im": 0.0
+    },
+    "3": {
+      "re": 0.0,
+      "im": 0.0
+    }
+  }
+}

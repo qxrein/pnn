@@ -1,0 +1,28 @@
+{
+  "rows": [
+    {
+      "variant": "d_physical_scaled",
+      "t_minus1": 0.004950828810467905,
+      "t_plus1": 0.004147237195727663,
+      "t_minus1_complex_error": 0.044459957382702066,
+      "t_plus1_complex_error": 0.04526354899684172,
+      "total_complex_l2": 0.5185547001962422,
+      "scattered_complex_l2": 11.011253909626504,
+      "R_plus_T": 1.001133699448041,
+      "score": 11.10211111545409
+    },
+    {
+      "variant": "e_physical_balanced",
+      "t_minus1": 0.005366069427941284,
+      "t_plus1": 0.004568198593365515,
+      "t_minus1_complex_error": 0.044044716765228684,
+      "t_plus1_complex_error": 0.04484258759920387,
+      "total_complex_l2": 0.30133510709438843,
+      "scattered_complex_l2": 6.398702730580035,
+      "R_plus_T": 1.001341605251692,
+      "score": 6.48893164019616
+    }
+  ],
+  "phase5_passed": false,
+  "next_step": "No 10000-epoch run unless both \u00b11 amplitudes improve."
+}
