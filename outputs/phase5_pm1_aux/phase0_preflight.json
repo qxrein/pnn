@@ -1,0 +1,19 @@
+{
+  "git_commit": "1a0e7e499837ffb2dc23d7633b4ecda882a65562",
+  "working_tree_status": "?? .kiro/\n?? outputs/phase5_curvature_aware/\n?? outputs/phase5_gradient_alignment/\n?? outputs/phase5_preconditioned_gradient/\n?? scripts/__pycache__/run_curvature_aware.cpython-314.pyc\n?? scripts/__pycache__/run_gradient_alignment.cpython-314.pyc\n?? scripts/__pycache__/run_pm1_aux.cpython-314.pyc\n?? scripts/__pycache__/run_preconditioned_gradient.cpython-314.pyc\n?? scripts/run_curvature_aware.py\n?? scripts/run_gradient_alignment.py\n?? scripts/run_pm1_aux.py\n?? scripts/run_preconditioned_gradient.py",
+  "canonical_sha256": "82fbd541425c6d7914678e1cca94a9915e529e4e816c9f969100281ad7d369d5",
+  "canonical_sha_ok": true,
+  "companion_sha256": "3a58df7b98c3c403943dd088845479997c33ce3503962c578deadfce132c6c2a",
+  "companion_sha_ok": true,
+  "model_config_hash": "8399ba133fed39af6d1a9874b93cc9d806139a88071d5c950d9d5410ca18ebad",
+  "seed": 42,
+  "baseline_t1": 0.00638,
+  "success_threshold": 0.02,
+  "target_t1": 0.049410786,
+  "loss_formula": "L_total = L_PDE + w_pm1 * L_pm1",
+  "L_pm1_formula": "-(|t_{-1}|^2 + |t_{+1}|^2)  [no RCWA]",
+  "modal_data_loss_weight": 0.0,
+  "optical_coupling": false,
+  "rcwa_in_objective": false,
+  "max_total_epochs": 600
+}

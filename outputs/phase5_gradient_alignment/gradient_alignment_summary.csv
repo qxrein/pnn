@@ -1,0 +1,2 @@
+label,case,rank,condition_number,pm1_subspace_rank,max_active_pm1_sensitivity,total_grad_frac_pm1,ridge_grad_frac_pm1,d_t_pm1_total,t1_start,t1_end,t1_increasing,avg_hgrad_frac_pm1,pytest_passed,canonical_sha_ok,companion_sha_ok
+gradient_alignment_audit,A,216,916282372843.5442,4,4.728100486369262,0.0,0.0,0.0,0.00637755102040808,0.005547344189589806,False,0.08145654512869925,True,True,True

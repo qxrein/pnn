@@ -1,0 +1,123 @@
+{
+  "cosines": {
+    "pde_air_vs_pde_grat": 0.0,
+    "pde_air_vs_pde_sub": 0.0,
+    "pde_air_vs_vertical_E": 0.0,
+    "pde_air_vs_vertical_H": 0.0,
+    "pde_air_vs_horizontal_E": 0.0,
+    "pde_air_vs_horizontal_H": 0.0,
+    "pde_air_vs_top_DtN": 0.0,
+    "pde_air_vs_bottom_DtN": 0.0,
+    "pde_air_vs_total": 0.0,
+    "pde_grat_vs_pde_sub": 0.0,
+    "pde_grat_vs_vertical_E": 0.0,
+    "pde_grat_vs_vertical_H": 0.0,
+    "pde_grat_vs_horizontal_E": 0.0,
+    "pde_grat_vs_horizontal_H": 0.0,
+    "pde_grat_vs_top_DtN": 0.0,
+    "pde_grat_vs_bottom_DtN": 0.0,
+    "pde_grat_vs_total": 0.9999999999999999,
+    "pde_sub_vs_vertical_E": 0.0,
+    "pde_sub_vs_vertical_H": 0.0,
+    "pde_sub_vs_horizontal_E": 0.0,
+    "pde_sub_vs_horizontal_H": 0.0,
+    "pde_sub_vs_top_DtN": 0.0,
+    "pde_sub_vs_bottom_DtN": 0.0,
+    "pde_sub_vs_total": 0.0,
+    "vertical_E_vs_vertical_H": 0.0,
+    "vertical_E_vs_horizontal_E": 0.0,
+    "vertical_E_vs_horizontal_H": 0.0,
+    "vertical_E_vs_top_DtN": 0.0,
+    "vertical_E_vs_bottom_DtN": 0.0,
+    "vertical_E_vs_total": 0.0,
+    "vertical_H_vs_horizontal_E": 0.0,
+    "vertical_H_vs_horizontal_H": 0.0,
+    "vertical_H_vs_top_DtN": 0.0,
+    "vertical_H_vs_bottom_DtN": 0.0,
+    "vertical_H_vs_total": 0.0,
+    "horizontal_E_vs_horizontal_H": 0.0,
+    "horizontal_E_vs_top_DtN": 0.0,
+    "horizontal_E_vs_bottom_DtN": 0.0,
+    "horizontal_E_vs_total": 0.0,
+    "horizontal_H_vs_top_DtN": 0.0,
+    "horizontal_H_vs_bottom_DtN": 0.0,
+    "horizontal_H_vs_total": 0.0,
+    "top_DtN_vs_bottom_DtN": 0.0,
+    "top_DtN_vs_total": 0.0,
+    "bottom_DtN_vs_total": 0.0
+  },
+  "directional_derivs": {
+    "pde_air": {
+      "d_t_minus1": 0.0,
+      "d_t_plus1": 0.0,
+      "d_t_pm1_combined": 0.0,
+      "gradient_norm": 0.0
+    },
+    "pde_grat": {
+      "d_t_minus1": 0.0,
+      "d_t_plus1": 0.0,
+      "d_t_pm1_combined": 0.0,
+      "gradient_norm": 0.8535987877183331
+    },
+    "pde_sub": {
+      "d_t_minus1": 0.0,
+      "d_t_plus1": 0.0,
+      "d_t_pm1_combined": 0.0,
+      "gradient_norm": 0.0
+    },
+    "vertical_E": {
+      "d_t_minus1": 0.0,
+      "d_t_plus1": 0.0,
+      "d_t_pm1_combined": 0.0,
+      "gradient_norm": 0.0
+    },
+    "vertical_H": {
+      "d_t_minus1": 0.0,
+      "d_t_plus1": 0.0,
+      "d_t_pm1_combined": 0.0,
+      "gradient_norm": 0.0
+    },
+    "horizontal_E": {
+      "d_t_minus1": 0.0,
+      "d_t_plus1": 0.0,
+      "d_t_pm1_combined": 0.0,
+      "gradient_norm": 0.0
+    },
+    "horizontal_H": {
+      "d_t_minus1": 0.0,
+      "d_t_plus1": 0.0,
+      "d_t_pm1_combined": 0.0,
+      "gradient_norm": 0.0
+    },
+    "top_DtN": {
+      "d_t_minus1": 0.0,
+      "d_t_plus1": 0.0,
+      "d_t_pm1_combined": 0.0,
+      "gradient_norm": 0.0
+    },
+    "bottom_DtN": {
+      "d_t_minus1": 0.0,
+      "d_t_plus1": 0.0,
+      "d_t_pm1_combined": 0.0,
+      "gradient_norm": 0.0
+    },
+    "total": {
+      "d_t_minus1": 0.0,
+      "d_t_plus1": 0.0,
+      "d_t_pm1_combined": 0.0,
+      "gradient_norm": 0.8535987877183331
+    }
+  },
+  "gradient_norms": {
+    "pde_air": 0.0,
+    "pde_grat": 0.8535987877183331,
+    "pde_sub": 0.0,
+    "vertical_E": 0.0,
+    "vertical_H": 0.0,
+    "horizontal_E": 0.0,
+    "horizontal_H": 0.0,
+    "top_DtN": 0.0,
+    "bottom_DtN": 0.0,
+    "total": 0.8535987877183331
+  }
+}

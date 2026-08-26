@@ -1,0 +1,90 @@
+{
+  "git_commit": "1a0e7e499837ffb2dc23d7633b4ecda882a65562",
+  "working_tree_status": "?? .kiro/\n?? outputs/phase5_gradient_alignment/\n?? scripts/__pycache__/run_gradient_alignment.cpython-314.pyc\n?? scripts/__pycache__/run_preconditioned_gradient.cpython-314.pyc\n?? scripts/run_gradient_alignment.py\n?? scripts/run_preconditioned_gradient.py",
+  "canonical_sha256": "82fbd541425c6d7914678e1cca94a9915e529e4e816c9f969100281ad7d369d5",
+  "canonical_sha_ok": true,
+  "companion_sha256": "3a58df7b98c3c403943dd088845479997c33ce3503962c578deadfce132c6c2a",
+  "companion_sha_ok": true,
+  "model_config_hash": "8399ba133fed39af6d1a9874b93cc9d806139a88071d5c950d9d5410ca18ebad",
+  "parameter_order_hash": "e9ff9446ba263d6fea31ab0596378b5a667d688aa9dcbb9a9ff10143b52b16c1",
+  "feature_scale_hash": "9a408de6497ad81f38ca74e6949d463a850a49c29d9a91d980be9404b5ed4156",
+  "seed": 42,
+  "alpha": 0.1,
+  "epochs": 1000,
+  "modal_data_loss_weight": 0.0,
+  "optical_coupling": false,
+  "canonical_modified": false,
+  "companion_used_in_loss": false,
+  "pm1_subspace": {
+    "source": "reconstructed",
+    "pm1_rank": 4,
+    "sigma_pm1": [
+      5.022174193308713,
+      5.022174193308713,
+      5.022174193308712,
+      5.022174193308712
+    ],
+    "sigma_threshold": 0.05022174193308713,
+    "J_pm1_shape": [
+      4,
+      1386
+    ],
+    "V_pm1_shape": [
+      1386,
+      4
+    ],
+    "alpha": 0.1,
+    "update_formula": "g_precond = (1-alpha)*P_pm1@g + alpha*g",
+    "alpha_meaning": "weight of P_perp component; 0=pure_pm1, 1=unmodified",
+    "V_pm1_criterion": "top right singular vectors of J_pm1=[J_t-1;J_t+1] with sigma>0.01*sigma_max",
+    "V_pm1_frozen": true,
+    "rcwa_used_in_objective": false,
+    "modal_data_loss": false
+  },
+  "decision": {
+    "case": "B",
+    "decision": "Preconditioned gradient preserved |t_\u00b11| (~0.00634) but did not achieve material improvement. Inspect curvature and whether competing loss blocks limit progress.",
+    "t1_start": 0.00637755102040808,
+    "t1_end": 0.006341813292129727,
+    "t1_max": 0.00637755102040808,
+    "t1_max_epoch": 1,
+    "baseline_t1": 0.00638,
+    "target_t1": 0.049410786,
+    "improving": false,
+    "recovering": false,
+    "stable_RT": true,
+    "stable_loss": true,
+    "seed43_run": false,
+    "seed43_improving": false,
+    "longer_run_authorized": false,
+    "modal_data_loss": false,
+    "optical_coupling": false,
+    "start_10000_epoch_run": false
+  },
+  "seed42": {
+    "t1_start": 0.00637755102040808,
+    "t1_end": 0.006341813292129727,
+    "t1_max": 0.00637755102040808,
+    "t1_max_epoch": 1,
+    "R_plus_T_max": 1.005667536255486,
+    "total_loss_final": 0.00032331024354323706,
+    "pm1_frac_before_avg": 0.04359051639612925,
+    "pm1_frac_after_avg": 0.15591870252324888
+  },
+  "seed43": null,
+  "baseline_t1": 0.00638,
+  "target_t1": 0.049410786,
+  "phase5_passed": false,
+  "compileall": {
+    "returncode": 0,
+    "passed": true,
+    "output": "(clean)"
+  },
+  "pytest": {
+    "returncode": 0,
+    "passed": true,
+    "summary_line": "266 passed in 127.59s (0:02:07)",
+    "available": true,
+    "stdout_tail": "........................................................................ [ 27%]\n........................................................................ [ 54%]\n........................................................................ [ 81%]\n..................................................                       [100%]\n266 passed in 127.59s (0:02:07)"
+  }
+}

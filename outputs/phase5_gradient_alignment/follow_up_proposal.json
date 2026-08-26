@@ -1,0 +1,22 @@
+{
+  "authorized_by_this_task": false,
+  "case": "A",
+  "proposed_experiment": {
+    "method": "PDE-Jacobian preconditioned gradient",
+    "rationale": "The PDE gradient has negligible projection onto the \u00b11-sensitive subspace. A preconditioned update that projects the gradient onto the \u00b11-active singular directions before the optimizer step would steer learning toward the target modes without changing the objective.",
+    "algorithm": "Compute the projection P_pm1 @ g (where P_pm1 is the projector onto the \u00b11-sensitive active subspace), then take a gradient step with g_precond = P_pm1 @ g + alpha * P_null @ g where alpha < 1 downweights null-space components.",
+    "constraints": [
+      "PDE-only: no RCWA in objective",
+      "No modal-data loss",
+      "No optical coupling",
+      "Recompute P_pm1 from J_t every N epochs (frozen RCWA not used)"
+    ]
+  },
+  "diagnostic_evidence": {
+    "max_active_pm1_sensitivity": 4.728100486369262,
+    "total_gradient_frac_pm1": 0.0,
+    "d_t_pm1_along_total_grad": 0.0,
+    "pm1_subspace_rank": 4
+  },
+  "note": "This proposal is a design document only.  No experiment starts automatically.  Authorization required before any implementation."
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "Token Limits": {
+      "command": "token-limits",
+      "args": ["mcp-server"]
+    }
+  }
+}

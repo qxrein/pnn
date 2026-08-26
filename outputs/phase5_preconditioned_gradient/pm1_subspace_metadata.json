@@ -1,0 +1,26 @@
+{
+  "source": "reconstructed",
+  "pm1_rank": 4,
+  "sigma_pm1": [
+    5.022174193308713,
+    5.022174193308713,
+    5.022174193308712,
+    5.022174193308712
+  ],
+  "sigma_threshold": 0.05022174193308713,
+  "J_pm1_shape": [
+    4,
+    1386
+  ],
+  "V_pm1_shape": [
+    1386,
+    4
+  ],
+  "alpha": 0.1,
+  "update_formula": "g_precond = (1-alpha)*P_pm1@g + alpha*g",
+  "alpha_meaning": "weight of P_perp component; 0=pure_pm1, 1=unmodified",
+  "V_pm1_criterion": "top right singular vectors of J_pm1=[J_t-1;J_t+1] with sigma>0.01*sigma_max",
+  "V_pm1_frozen": true,
+  "rcwa_used_in_objective": false,
+  "modal_data_loss": false
+}
