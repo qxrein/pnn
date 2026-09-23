@@ -1,0 +1,17 @@
+{
+  "git_commit": "b8117e6dd81ff65d21c2791753d11f15e748ae8a",
+  "status": "?? outputs/obstruction_sweep/\n?? scripts/__pycache__/run_aux_generalization.cpython-314.pyc\n?? scripts/__pycache__/run_obstruction_sweep.cpython-314.pyc\n?? scripts/run_aux_generalization.py\n?? scripts/run_obstruction_sweep.py",
+  "canonical_sha_ok": true,
+  "companion_sha_ok": true,
+  "w_pm1": 1.0,
+  "epochs": 600,
+  "geometries": [
+    "G1_L1p5_dc0p4_n1p5_0deg",
+    "G2_L0p8_dc0p4_n2p0_0deg",
+    "G3_L0p8_dc0p25_n1p5_0deg",
+    "G4_L0p8_dc0p4_n1p5_10deg"
+  ],
+  "modal_data_loss": false,
+  "optical_coupling": false,
+  "claim_tested": "Does the auxiliary loss L_pm1 produce |t_\u00b11| > 2\u00d7 PDE-only baseline for all 4 tested geometries with both seed 42 and seed 43?"
+}
