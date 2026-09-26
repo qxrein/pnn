@@ -1,6 +1,6 @@
 {
   "experiment": "pm1_auxiliary_loss_w1.0",
-  "git_commit": "1a0e7e499837ffb2dc23d7633b4ecda882a65562",
+  "git_commit": "6e86215d663582f7dfd35a2c21cc4f7474f029e5",
   "canonical_sha256": "82fbd541425c6d7914678e1cca94a9915e529e4e816c9f969100281ad7d369d5",
   "canonical_sha_ok": true,
   "companion_sha256": "3a58df7b98c3c403943dd088845479997c33ce3503962c578deadfce132c6c2a",
