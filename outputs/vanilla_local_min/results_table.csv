@@ -1,0 +1,15 @@
+experiment,variant,seed,label,best_t1,best_RT,best_epoch
+A1,scale=0.01,42,randinit_0.01_s42,0.00349,0.9961,600
+A1,scale=0.01,43,randinit_0.01_s43,0.00263,0.9975,600
+A1,scale=0.10,42,randinit_0.10_s42,0.00619,0.9293,1
+A1,scale=0.10,43,randinit_0.10_s43,0.0025,0.9701,1
+A2,warm_start,42,warmstart_s42,0.00343,0.999,600
+A2,warm_start,43,warmstart_s43,0.00076,1.0032,600
+B,w_int=2,42,wint2_s42,0.00318,0.9944,600
+B,w_int=2,43,wint2_s43,0.00326,0.996,600
+B,w_int=5,42,wint5_s42,0.00318,0.9944,600
+B,w_int=5,43,wint5_s43,0.00326,0.996,600
+B,w_int=10,42,wint10_s42,0.00318,0.9944,600
+B,w_int=10,43,wint10_s43,0.00326,0.996,600
+C,L-BFGS,42,lbfgs_s42,0.00262,1.0068,80
+C,L-BFGS,43,lbfgs_s43,0.00195,0.9989,20

@@ -1,0 +1,14 @@
+{
+  "architecture": "VanillaMLP (4\u00d732 tanh)",
+  "n_params": 3462,
+  "epochs": 5000,
+  "seed": 42,
+  "best_t1": 0.0012113491384454337,
+  "best_epoch": 2000,
+  "best_RT": 1.0022063407900823,
+  "final_t1": 0.0011692207341781591,
+  "t1_max": 0.0012296409408475385,
+  "plateaued_last40pct": true,
+  "improving_past_0p02": false,
+  "verdict": "GENUINELY_STUCK: plateaued below 0.006 \u2014 different pathology from obstruction"
+}

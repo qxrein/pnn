@@ -1,0 +1,47 @@
+{
+  "git_commit": "4df34159439aba24417a38ef5f1c7bf6f59d5a1f",
+  "canonical_sha256": "82fbd541425c6d7914678e1cca94a9915e529e4e816c9f969100281ad7d369d5",
+  "canonical_sha_ok": true,
+  "architecture": "VanillaMLP (monolithic, no Fourier basis)",
+  "n_params": 3462,
+  "n_params_modal": 1620,
+  "n_layers": 4,
+  "n_units": 32,
+  "activation": "tanh",
+  "epochs": 600,
+  "lr": 0.0005,
+  "optimizer": "Adam + CosineAnnealingLR",
+  "loss_type": "PDE-only (no auxiliary \u00b11 loss)",
+  "seed42_best_t1": 0.0031504073792335114,
+  "seed42_best_epoch": 200,
+  "seed42_RT": 0.9944106826527117,
+  "seed43_best_t1": 0.0032412947622946393,
+  "seed43_best_epoch": 300,
+  "seed43_RT": 0.9959715910279006,
+  "seeds_consistent": true,
+  "rcwa_target_t1": 0.049,
+  "improvement_over_modal_baseline": 0.5250678965389185,
+  "frac_pm1_at_init": 0.2992181709721262,
+  "pm1_sigma_max": 0.475499625018413,
+  "pm1_subspace_rank": 4,
+  "g_norm_at_init": 0.03581954673185681,
+  "obstruction_verdict": "NOT obstructed (gradient reaches \u00b11 subspace)",
+  "table1": {
+    "PDE-only (Adam) \u2014 modal": {
+      "t1": 0.006,
+      "RT": 1.0
+    },
+    "Preconditioned gradient": {
+      "t1": 0.006,
+      "RT": 1.003
+    },
+    "\u00b11 auxiliary loss \u2014 modal": {
+      "t1": 0.019,
+      "RT": 1.005
+    },
+    "PDE-only (Adam) \u2014 vanilla": {
+      "t1": 0.00315,
+      "RT": 0.99441
+    }
+  }
+}

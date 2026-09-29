@@ -1,0 +1,24 @@
+[
+  {
+    "experiment": "C",
+    "variant": "L-BFGS",
+    "seed": 42,
+    "label": "lbfgs_s42",
+    "lbfgs_outer_steps": 300,
+    "lbfgs_total_closures": 7519,
+    "best_t1": 0.002620228922697313,
+    "best_RT": 1.0067503976285292,
+    "best_epoch": 80
+  },
+  {
+    "experiment": "C",
+    "variant": "L-BFGS",
+    "seed": 43,
+    "label": "lbfgs_s43",
+    "lbfgs_outer_steps": 300,
+    "lbfgs_total_closures": 7331,
+    "best_t1": 0.0019483362519851714,
+    "best_RT": 0.9988881342719069,
+    "best_epoch": 20
+  }
+]

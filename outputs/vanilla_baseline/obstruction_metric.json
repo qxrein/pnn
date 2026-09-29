@@ -1,0 +1,22 @@
+{
+  "n_params": 3462,
+  "g_norm": 0.03581954673185681,
+  "frac_pm1": 0.2992181709721262,
+  "proj_norm_pm1": 0.010717859258156796,
+  "pm1_subspace_rank": 4,
+  "pm1_sigma_max": 0.475499625018413,
+  "pm1_sigma_vals": [
+    0.475499625018413,
+    0.475499625018413,
+    0.0405944626541728,
+    0.04059446265417279
+  ],
+  "t_at_zero": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "max_E0_at_init": 0.0,
+  "interpretation": "NOT obstructed (gradient reaches \u00b11 subspace)"
+}

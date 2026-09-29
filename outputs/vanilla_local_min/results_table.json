@@ -1,0 +1,128 @@
+[
+  {
+    "experiment": "A1",
+    "variant": "scale=0.01",
+    "seed": 42,
+    "label": "randinit_0.01_s42",
+    "best_t1": 0.00349,
+    "best_RT": 0.9961,
+    "best_epoch": 600
+  },
+  {
+    "experiment": "A1",
+    "variant": "scale=0.01",
+    "seed": 43,
+    "label": "randinit_0.01_s43",
+    "best_t1": 0.00263,
+    "best_RT": 0.9975,
+    "best_epoch": 600
+  },
+  {
+    "experiment": "A1",
+    "variant": "scale=0.10",
+    "seed": 42,
+    "label": "randinit_0.10_s42",
+    "best_t1": 0.00619,
+    "best_RT": 0.9293,
+    "best_epoch": 1
+  },
+  {
+    "experiment": "A1",
+    "variant": "scale=0.10",
+    "seed": 43,
+    "label": "randinit_0.10_s43",
+    "best_t1": 0.0025,
+    "best_RT": 0.9701,
+    "best_epoch": 1
+  },
+  {
+    "experiment": "A2",
+    "variant": "warm_start",
+    "seed": 42,
+    "label": "warmstart_s42",
+    "best_t1": 0.00343,
+    "best_RT": 0.999,
+    "best_epoch": 600
+  },
+  {
+    "experiment": "A2",
+    "variant": "warm_start",
+    "seed": 43,
+    "label": "warmstart_s43",
+    "best_t1": 0.00076,
+    "best_RT": 1.0032,
+    "best_epoch": 600
+  },
+  {
+    "experiment": "B",
+    "variant": "w_int=2",
+    "seed": 42,
+    "label": "wint2_s42",
+    "best_t1": 0.00318,
+    "best_RT": 0.9944,
+    "best_epoch": 600
+  },
+  {
+    "experiment": "B",
+    "variant": "w_int=2",
+    "seed": 43,
+    "label": "wint2_s43",
+    "best_t1": 0.00326,
+    "best_RT": 0.996,
+    "best_epoch": 600
+  },
+  {
+    "experiment": "B",
+    "variant": "w_int=5",
+    "seed": 42,
+    "label": "wint5_s42",
+    "best_t1": 0.00318,
+    "best_RT": 0.9944,
+    "best_epoch": 600
+  },
+  {
+    "experiment": "B",
+    "variant": "w_int=5",
+    "seed": 43,
+    "label": "wint5_s43",
+    "best_t1": 0.00326,
+    "best_RT": 0.996,
+    "best_epoch": 600
+  },
+  {
+    "experiment": "B",
+    "variant": "w_int=10",
+    "seed": 42,
+    "label": "wint10_s42",
+    "best_t1": 0.00318,
+    "best_RT": 0.9944,
+    "best_epoch": 600
+  },
+  {
+    "experiment": "B",
+    "variant": "w_int=10",
+    "seed": 43,
+    "label": "wint10_s43",
+    "best_t1": 0.00326,
+    "best_RT": 0.996,
+    "best_epoch": 600
+  },
+  {
+    "experiment": "C",
+    "variant": "L-BFGS",
+    "seed": 42,
+    "label": "lbfgs_s42",
+    "best_t1": 0.00262,
+    "best_RT": 1.0068,
+    "best_epoch": 80
+  },
+  {
+    "experiment": "C",
+    "variant": "L-BFGS",
+    "seed": 43,
+    "label": "lbfgs_s43",
+    "best_t1": 0.00195,
+    "best_RT": 0.9989,
+    "best_epoch": 20
+  }
+]

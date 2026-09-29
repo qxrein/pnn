@@ -1,0 +1,5 @@
+experiment,best_t_minus1,R_plus_T
+PDE-only (Adam) — modal,0.006,1.0
+Preconditioned gradient,0.006,1.003
+±1 auxiliary loss — modal,0.019,1.005
+PDE-only (Adam) — vanilla,0.00315,0.99441

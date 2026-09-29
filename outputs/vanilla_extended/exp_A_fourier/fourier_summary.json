@@ -1,0 +1,18 @@
+{
+  "architecture": "FourierFeatureMLP",
+  "n_params": 4422,
+  "n_freq": 16,
+  "n_bloch": 8,
+  "epochs": 600,
+  "frac_pm1_at_init": 0.24662840908690045,
+  "pm1_sigma_max": 0.7341679031656383,
+  "is_obstructed": false,
+  "seed42_best_t1": 0.00161047624567319,
+  "seed42_best_epoch": 600,
+  "seed42_RT": 1.0047529801792106,
+  "seed43_best_t1": 0.0013660667445485766,
+  "seed43_best_epoch": 600,
+  "seed43_RT": 1.0024868511867615,
+  "seeds_consistent": true,
+  "improvement_vs_vanilla_baseline": 0.2684127076121983
+}

@@ -1,0 +1,50 @@
+{
+  "git_commit": "4df34159439aba24417a38ef5f1c7bf6f59d5a1f",
+  "canonical_geometry": {
+    "period": 0.8,
+    "duty_cycle": 0.4000000000000001,
+    "n_ridge": 1.5,
+    "n_sub": 1.45,
+    "ridge_height": 0.2
+  },
+  "exp_A_fourier_features": {
+    "architecture": "FourierFeatureMLP",
+    "n_params": 4422,
+    "n_freq": 16,
+    "n_bloch": 8,
+    "epochs": 600,
+    "frac_pm1_at_init": 0.24662840908690045,
+    "pm1_sigma_max": 0.7341679031656383,
+    "is_obstructed": false,
+    "seed42_best_t1": 0.00161047624567319,
+    "seed42_best_epoch": 600,
+    "seed42_RT": 1.0047529801792106,
+    "seed43_best_t1": 0.0013660667445485766,
+    "seed43_best_epoch": 600,
+    "seed43_RT": 1.0024868511867615,
+    "seeds_consistent": true,
+    "improvement_vs_vanilla_baseline": 0.2684127076121983
+  },
+  "exp_B_long_run": {
+    "architecture": "VanillaMLP (4\u00d732 tanh)",
+    "n_params": 3462,
+    "epochs": 5000,
+    "seed": 42,
+    "best_t1": 0.0012113491384454337,
+    "best_epoch": 2000,
+    "best_RT": 1.0022063407900823,
+    "final_t1": 0.0011692207341781591,
+    "t1_max": 0.0012296409408475385,
+    "plateaued_last40pct": true,
+    "improving_past_0p02": false,
+    "verdict": "GENUINELY_STUCK: plateaued below 0.006 \u2014 different pathology from obstruction"
+  },
+  "exp_C_sweep_summary": {
+    "n_total": 45,
+    "n_obstructed": 0,
+    "n_not_obstructed": 45,
+    "frac_pm1_mean": 0.3297603423350007,
+    "frac_pm1_min": 0.2578398613316109,
+    "frac_pm1_max": 0.7759396043605151
+  }
+}

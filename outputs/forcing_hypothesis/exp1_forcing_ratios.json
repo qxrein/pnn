@@ -1,0 +1,72 @@
+[
+  {
+    "label": "canonical",
+    "period": 0.8,
+    "duty_cycle": 0.4,
+    "ridge_height": 0.2,
+    "n_ridge": 1.5,
+    "theta_deg": 0.0,
+    "aux_improvement": 3.0,
+    "forcing_ratio": 1.0697026787518165,
+    "norm_S0": 0.021645018127729787,
+    "norm_S_m1": 0.016372162231290927,
+    "norm_S_p1": 0.016372162231290927,
+    "norm_S_pm1": 0.02315373387286418
+  },
+  {
+    "label": "G1_L1p5",
+    "period": 1.5,
+    "duty_cycle": 0.4,
+    "ridge_height": 0.2,
+    "n_ridge": 1.5,
+    "theta_deg": 0.0,
+    "aux_improvement": 1.33,
+    "forcing_ratio": 1.0697026787518165,
+    "norm_S0": 0.021645018127729787,
+    "norm_S_m1": 0.016372162231290927,
+    "norm_S_p1": 0.016372162231290927,
+    "norm_S_pm1": 0.02315373387286418
+  },
+  {
+    "label": "G2_n2p0",
+    "period": 0.8,
+    "duty_cycle": 0.4,
+    "ridge_height": 0.2,
+    "n_ridge": 2.0,
+    "theta_deg": 0.0,
+    "aux_improvement": 12.16,
+    "forcing_ratio": 1.0697026787518162,
+    "norm_S0": 0.27845031794825276,
+    "norm_S_m1": 0.21061815480592905,
+    "norm_S_p1": 0.21061815480592905,
+    "norm_S_pm1": 0.29785905100854093
+  },
+  {
+    "label": "G3_dc0p25",
+    "period": 0.8,
+    "duty_cycle": 0.25,
+    "ridge_height": 0.2,
+    "n_ridge": 1.5,
+    "theta_deg": 0.0,
+    "aux_improvement": 1.25,
+    "forcing_ratio": 1.2711055535910851,
+    "norm_S0": 0.013620523602327525,
+    "norm_S_m1": 0.01224222681380951,
+    "norm_S_p1": 0.01224222681380951,
+    "norm_S_pm1": 0.01731312319373697
+  },
+  {
+    "label": "G4_th10",
+    "period": 0.8,
+    "duty_cycle": 0.4,
+    "ridge_height": 0.2,
+    "n_ridge": 1.5,
+    "theta_deg": 10.0,
+    "aux_improvement": 9.91,
+    "forcing_ratio": 1.0697026787518165,
+    "norm_S0": 0.021541511341135147,
+    "norm_S_m1": 0.016293870317088458,
+    "norm_S_p1": 0.016293870317088458,
+    "norm_S_pm1": 0.0230430123859749
+  }
+]

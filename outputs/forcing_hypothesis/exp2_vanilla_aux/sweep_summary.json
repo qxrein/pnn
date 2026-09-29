@@ -1,0 +1,33 @@
+{
+  "best_w": 0.25,
+  "rows": [
+    {
+      "w_pm1": 0.01,
+      "t1_max_valid": 0.0032404568668216375,
+      "RT_final": 0.9952261184612096,
+      "diverged": false,
+      "stable": true
+    },
+    {
+      "w_pm1": 0.05,
+      "t1_max_valid": 0.003324385654848759,
+      "RT_final": 0.9952349066557854,
+      "diverged": false,
+      "stable": true
+    },
+    {
+      "w_pm1": 0.1,
+      "t1_max_valid": 0.003432669089299897,
+      "RT_final": 0.9952295316590495,
+      "diverged": false,
+      "stable": true
+    },
+    {
+      "w_pm1": 0.25,
+      "t1_max_valid": 0.00380122494744293,
+      "RT_final": 0.9952344251621513,
+      "diverged": false,
+      "stable": true
+    }
+  ]
+}

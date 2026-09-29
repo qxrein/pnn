@@ -1,0 +1,46 @@
+{
+  "git_commit": "4df34159439aba24417a38ef5f1c7bf6f59d5a1f",
+  "baselines": {
+    "vanilla_pde_only": 0.003,
+    "vanilla_aux_loss": 0.004,
+    "rcwa_target": 0.049,
+    "meaningful_threshold": 0.0045000000000000005
+  },
+  "exp_D": {
+    "born_t1_m1": 0.022353729726947894,
+    "seed42_best_t1": 0.019090986191028614,
+    "seed42_best_RT": 0.9698760778686758,
+    "seed43_best_t1": 0.020072310454489265,
+    "escapes": true
+  },
+  "exp_E": {
+    "init": {
+      "shape": "LOCAL_MINIMUM (loss increases in all directions)",
+      "loss_at_anchor": 0.0009061328613077877,
+      "loss_range": 3.7152355914370765,
+      "relative_range": 4100.100272354118,
+      "loss_perimeter_mean": 1.712535492036054,
+      "t1_at_anchor": 0.0,
+      "t1_max_on_grid": 0.16059401189755687
+    },
+    "trained": {
+      "shape": "LOCAL_MINIMUM (loss increases in all directions)",
+      "loss_at_anchor": 0.0004904784056545896,
+      "loss_range": 0.02854298258370519,
+      "relative_range": 58.1941676833089,
+      "loss_perimeter_mean": 0.009722783688892582,
+      "t1_at_anchor": 0.003178376969235927,
+      "t1_max_on_grid": 0.026551131461289897
+    }
+  },
+  "exp_F": {
+    "curriculum_t1_final": 0.002250415368942643,
+    "curriculum_RT_final": 0.9849472035348634,
+    "direct_t1_best": 0.008151859959654346,
+    "direct_RT_best": 0.9956476450374763,
+    "g2_aux_loss_best": 0.07754,
+    "curriculum_escapes": false,
+    "direct_escapes": true,
+    "curriculum_vs_direct_improvement": 0.2760615835012534
+  }
+}

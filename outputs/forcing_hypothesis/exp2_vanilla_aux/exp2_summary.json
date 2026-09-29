@@ -1,0 +1,23 @@
+{
+  "architecture": "VanillaPINN (4\u00d732 tanh, joint x+z)",
+  "n_params": 3462,
+  "w_pm1_sweep": [
+    0.01,
+    0.05,
+    0.1,
+    0.25
+  ],
+  "w_pm1_used": 0.25,
+  "epochs": 600,
+  "seed42_best_t1": 0.004035468384764909,
+  "seed42_best_epoch": 200,
+  "seed42_RT": 0.9943037806439565,
+  "seed43_best_t1": 0.004463681357797565,
+  "seed43_best_epoch": 300,
+  "seed43_RT": 0.9960243939862176,
+  "seeds_consistent": true,
+  "improvement_vs_vanilla_pde": 1.3451561282549696,
+  "improvement_vs_modal_pde": 0.6725780641274848,
+  "modal_aux_t1": 0.019,
+  "rcwa_target": 0.049
+}

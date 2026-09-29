@@ -1,0 +1,11 @@
+{
+  "label": "fourier_init",
+  "n_params": 4422,
+  "frac_pm1": 0.24662840908690045,
+  "g_norm": 0.055679044465381855,
+  "pm1_sigma_max": 0.7341679031656383,
+  "pm1_rank": 4,
+  "is_obstructed": false,
+  "verdict": "NOT obstructed (gradient reaches \u00b11 subspace)",
+  "max_e0_at_init": 0.0
+}
